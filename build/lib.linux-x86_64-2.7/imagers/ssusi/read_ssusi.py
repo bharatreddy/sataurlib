@@ -26,7 +26,7 @@ class ProcessData(object):
         self.outDir = outDir
         self.inpDate = inpDate
 
-    def processed_data_to_file(self, coords="geo"):
+    def processed_data_to_file(self, coords="geo", keepRawFiles=False):
         """
         read the required data into a dataframe
         select only required columns, if aacgm
@@ -126,6 +126,8 @@ class ProcessData(object):
                 with open(outFileName, 'a') as ftB:
                     ssusiDF.to_csv(ftB, header=False,\
                                       index=False, sep=' ' )
+            if not keepRawFiles:
+                os.remove(currFile)
 
 
     def convert_to_aacgm(self, row):

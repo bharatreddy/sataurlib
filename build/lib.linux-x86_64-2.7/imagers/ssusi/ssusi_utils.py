@@ -214,8 +214,8 @@ class UtilsSsusi(object):
         
     def overlay_sat_data(self, filteredDict, mapHandle, ax,\
                         satList=["F18", "F17", "F16"], plotType='d135',\
-                        overlayTime=True, overlayTimeInterval=5, timeMarker='o',\
-                        timeMarkerSize=2., timeColor="grey", timeFontSize=8.,\
+                        overlayTime=True, overlayTimeInterval=5, timeLinestyle=':',\
+                        timeColor="black", timeFontSize=8.,\
                          plotCBar=True, autoScale=True, vmin=0., vmax=1000.,\
                          plotTitle=True, titleString=None, inpTime=None,alpha=0.5,\
                          markSatName=True, coords="mag", ssusiCmap="Greens"):
@@ -363,12 +363,14 @@ class UtilsSsusi(object):
                         (timePlotLatArr, timePlotLonArr) = self.cart2pol( xArr, yArr )
                         xTVecs, yTVecs = mapHandle(timePlotLonArr,\
                                          timePlotLatArr, coords=coords)
-                        mapHandle.plot(xTVecs, yTVecs,\
-                             marker=timeMarker,color=timeColor,\
-                              markersize=timeMarkerSize, zorder=7.)
-                        timeStr = allDayDatesList[dd].strftime("%H:%M")
+                        timeStr = " " + allDayDatesList[dd].strftime("%H:%M")
                         # Write Sat names used in plotting
                         if pixel == 0:
+                            xTVecFirst = xTVecs
+                            yTVecFirst = yTVecs
+                        if pixel == timessusiLons.shape[1]-1:
+                            xTVecLast = xTVecs
+                            yTVecLast = yTVecs
                             if markSatName:
                                 timeStr = timeStr + " (" + satNameKey + ")"
                             timeXVecs, timeYVecs = mapHandle(timePlotLonArr,\
@@ -377,6 +379,8 @@ class UtilsSsusi(object):
                                 fontsize=timeFontSize,fontweight='bold',
                                 ha='left',va='center',color='k',\
                                  clip_on=True, zorder=7.)
+                    mapHandle.plot([xTVecFirst, xTVecLast], [yTVecFirst, yTVecLast],\
+                                 timeColor, zorder=7., linestyle=timeLinestyle)
             # plot colorbar
             if plotCBar:
                 cbar = plt.colorbar(ssusiPlot, orientation='vertical')
