@@ -1,0 +1,17 @@
+Metadata-Version: 1.1
+Name: sataurlib
+Version: 1.0.0b1
+Summary: Tools to download, process and plot data from auroral imagers. currently the library can work with DMSP SSUSI and TIMED GUVI satellites.
+Home-page: UNKNOWN
+Author: Bharat Kunduri
+Author-email: bharatr@vt.edu
+License: MIT
+Description-Content-Type: UNKNOWN
+Description: Tools to download, process and plot data from DMSP SSUSI and TIMED GUVI. Please refer the documentation of the respective satellites before using the data for analysis and publication.
+        DMSP SSUSI website - https://ssusi.jhuapl.edu/
+        TIMED GUVI website - http://guvitimed.jhuapl.edu/
+Keywords: imagers,dmsp,timed guvi,aurora
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: MIT License
