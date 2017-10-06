@@ -143,7 +143,7 @@ class ProcessTGData(object):
                     delDirList.append( currDelDir )
         if not keepRawFiles:
             for dd in delDirList:
-                shutil.rmtree(dd)
+                os.rmdir(dd)
 
 
     def convert_to_aacgm(self, row):
