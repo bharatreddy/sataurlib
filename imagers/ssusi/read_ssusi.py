@@ -33,7 +33,8 @@ class ProcessData(object):
         coordinates are selected convert geo to
         AACGM coords and save data to file!
         """
-        # selFname = "PS.APL_V0116S024CB0005_SC.U_DI.A_GP.F18-SSUSI_PA.APL-SDR-DISK_DD.20141216_SN.26612-00_DF.NC"
+        # We'll delete raw File dirs at the end, keep alist of them
+        delDirList = []
         for fileInd, currFile in enumerate(self.fileList):
             # if selFname not in currFile:
             #     continue
@@ -123,11 +124,29 @@ class ProcessData(object):
                     ssusiDF.to_csv(ftB, header=True,\
                                       index=False, sep=' ' )
             else:
-                with open(outFileName, 'a') as ftB:
-                    ssusiDF.to_csv(ftB, header=False,\
-                                      index=False, sep=' ' )
+                # sometimes the file is already present!
+                # from a previous run.
+                # we'll simply append to existing data
+                # in that case!. So delete the existing file
+                # if that is the case.
+                if fileInd == 0:
+                    print "FILE Exists already! deleting and overwriting"
+                    os.remove(outFileName)
+                    with open(outFileName, 'w') as ftB:
+                        ssusiDF.to_csv(ftB, header=True,\
+                                          index=False, sep=' ' )
+                else:
+                    with open(outFileName, 'a') as ftB:
+                        ssusiDF.to_csv(ftB, header=False,\
+                                          index=False, sep=' ' )
             if not keepRawFiles:
                 os.remove(currFile)
+                currDelDir = "/".join(currFile.split("/")[:-1]) + "/"
+                if currDelDir not in delDirList:
+                    delDirList.append( currDelDir )
+        if not keepRawFiles:
+            for dd in delDirList:
+                shutil.rmtree(dd)
 
 
     def convert_to_aacgm(self, row):

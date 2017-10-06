@@ -6,6 +6,7 @@ import numpy
 import datetime
 import matplotlib.pyplot as plt
 import aacgmv2
+import shutil
 
 class ProcessTGData(object):
     """
@@ -27,21 +28,21 @@ class ProcessTGData(object):
         self.inpDate = inpDate
         print self.fileList
 
-    def processed_data_to_file(self, coords="geo"):
+    def processed_data_to_file(self, coords="geo", keepRawFiles=False):
         """
         read the required data into a dataframe
         select only required columns, if aacgm
         coordinates are selected convert geo to
         AACGM coords and save data to file!
         """
-        # selFname = "PS.APL_V0116S024CB0005_SC.U_DI.A_GP.F18-SSUSI_PA.APL-SDR-DISK_DD.20141216_SN.26612-00_DF.NC"
+        # We'll delete raw File dirs at the end, keep alist of them
+        delDirList = []
         for fileInd, currFile in enumerate(self.fileList):
             # if selFname not in currFile:
             #     continue
             # Get Sat name
             print "currently working with file-->", currFile
             print "processing--->", fileInd+1, "/", len(self.fileList), "files"
-            print currFile
             if ( (".nc" not in currFile) & (".NC" not in currFile) ):
                 print "Not a valid netcdf file!!"
                 continue
@@ -84,20 +85,20 @@ class ProcessTGData(object):
             dfDLBHS = pandas.DataFrame(dskIntLBHS.T,columns=dLBHSColList, index=dtList)
             dfDLBHL = pandas.DataFrame(dskIntLBHL.T,columns=dLBHLColList, index=dtList)
             # Merge the dataframes
-            ssusiDF = reduce(lambda left,right: pandas.merge(left,right,\
+            timedDF = reduce(lambda left,right: pandas.merge(left,right,\
                          left_index=True, right_index=True), [ dfLat, \
                         dfLon, dfD121, dfD130, dfD135, dfDLBHL, dfDLBHS ])
-            ssusiDF["orbitNum"] = currDataSet.variables['ORBIT_DAY'][:]
+            timedDF["orbitNum"] = currDataSet.variables['ORBIT_DAY'][:]
             # Lets also keep track of the sat name and shape of arrays
-            ssusiDF["sat"] = "TIMED"
-            ssusiDF["shapeArr"] = prpntLats.shape[0]
+            timedDF["sat"] = "TIMED"
+            timedDF["shapeArr"] = prpntLats.shape[0]
             # # reset index, we need datetime as a col
-            ssusiDF = ssusiDF.reset_index()
-            ssusiDF = ssusiDF.rename(columns = {'index':'date'})
+            timedDF = timedDF.reset_index()
+            timedDF = timedDF.rename(columns = {'index':'date'})
             if coords != "geo":
                 # Now we need to convert the GLAT, GLON into MLAT, MLON and MLT
-                ssusiDF = ssusiDF.apply(self.convert_to_aacgm, axis=1)
-                ssusiDF = ssusiDF.round(2)
+                timedDF = timedDF.apply(self.convert_to_aacgm, axis=1)
+                timedDF = timedDF.round(2)
                 # We'll only need aacgm coords, discard all geo coords
                 mlatColList = [ "mlat." + str(cNum+1) for cNum in range(prpntLats.shape[0]) ]
                 mlonColList = [ "mlon." + str(cNum+1) for cNum in range(prpntLats.shape[0]) ]
@@ -107,7 +108,7 @@ class ProcessTGData(object):
             else:
                 outCols = ["date", "sat", "orbitNum", "shapeArr"] + latColList + lonColList + d121ColList + \
                             d130ColList + d135ColList + dLBHSColList + dLBHLColList
-            ssusiDF = ssusiDF[ outCols ]
+            timedDF = timedDF[ outCols ]
             # We now need to write the processed data to a file
             if not os.path.exists(self.outDir):
                 os.makedirs(self.outDir)
@@ -117,12 +118,32 @@ class ProcessTGData(object):
             if not os.path.exists( outFileName ):
                 # NOTE we only need header when writing data for the first time!
                 with open(outFileName, 'w') as ftB:
-                    ssusiDF.to_csv(ftB, header=True,\
+                    timedDF.to_csv(ftB, header=True,\
                                       index=False, sep=' ' )
             else:
-                with open(outFileName, 'a') as ftB:
-                    ssusiDF.to_csv(ftB, header=False,\
-                                      index=False, sep=' ' )
+                # sometimes the file is already present!
+                # from a previous run.
+                # we'll simply append to existing data
+                # in that case!. So delete the existing file
+                # if that is the case.
+                if fileInd == 0:
+                    print "FILE Exists already! deleting and overwriting"
+                    os.remove(outFileName)
+                    with open(outFileName, 'w') as ftB:
+                        timedDF.to_csv(ftB, header=True,\
+                                          index=False, sep=' ' )
+                else:
+                    with open(outFileName, 'a') as ftB:
+                        timedDF.to_csv(ftB, header=False,\
+                                          index=False, sep=' ' )
+            if not keepRawFiles:
+                os.remove(currFile)
+                currDelDir = "/".join(currFile.split("/")[:-1]) + "/"
+                if currDelDir not in delDirList:
+                    delDirList.append( currDelDir )
+        if not keepRawFiles:
+            for dd in delDirList:
+                shutil.rmtree(dd)
 
 
     def convert_to_aacgm(self, row):

@@ -283,10 +283,10 @@ class UtilsTimedGuvi(object):
             #                      edgecolor='none', marker="s",\
             #                       vmin=vmin, vmax=vmax)
             timedPlot = mapHandle.pcolormesh(xVecs, yVecs,\
-                            timedDisk, zorder=1.9,
+                            timedDisk, zorder=5.,
                             vmin=0, vmax=vmax,
                             ax=ax, alpha=alpha, cmap=ssusiCmap)
-            # timedPlot.set_rasterized(True)
+            timedPlot.set_rasterized(True)
             # overlay time
             if overlayTime:
                 uniqueTimeList = timedDF["date"].unique()
