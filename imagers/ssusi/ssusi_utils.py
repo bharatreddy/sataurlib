@@ -122,7 +122,7 @@ class UtilsSsusi(object):
                             for col in filterCol]))].reset_index(drop=True)
             else:
                 evalStr = "(ssusiDF['{0}'] <" + str( int(-1*filterLat) ) + ".)" #
-                filterCol = [col for col in df if col.startswith('mlat')]
+                filterCol = [col for col in ssusiDF if col.startswith('mlat')]
                 if len(filterCol) > 0:
                     ssusiDF = ssusiDF[eval(" & ".join([\
                             evalStr.format(col) 
@@ -135,6 +135,8 @@ class UtilsSsusi(object):
             if ssusiDF.shape[0] == 0:
                 print "********NO DATA FOUND, CHECK FOR A " +\
                          "DIFFERENT TIME OR INCREASE TIMEDEL********"
+            # Sort the DF by time, since orbits mess it up
+            ssusiDF = ssusiDF.sort_values('date')
             filteredDict[key] = ssusiDF
         return filteredDict
 
@@ -284,7 +286,7 @@ class UtilsSsusi(object):
             #                      edgecolor='none', marker="s",\
             #                       vmin=vmin, vmax=vmax)
             ssusiPlot = mapHandle.pcolormesh(xVecs, yVecs,\
-                            ssusiDisk, zorder=1.9,
+                            ssusiDisk, zorder=5.,
                             vmin=0, vmax=vmax,
                             ax=ax, alpha=alpha, cmap=ssusiCmap)
             ssusiPlot.set_rasterized(True)

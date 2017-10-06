@@ -119,7 +119,7 @@ class UtilsTimedGuvi(object):
                             for col in filterCol]))].reset_index(drop=True)
             else:
                 evalStr = "(timedDF['{0}'] <" + str( int(-1*filterLat) ) + ".)" #
-                filterCol = [col for col in df if col.startswith('mlat')]
+                filterCol = [col for col in timedDF if col.startswith('mlat')]
                 if len(filterCol) > 0:
                     timedDF = timedDF[eval(" & ".join([\
                             evalStr.format(col) 
@@ -132,6 +132,8 @@ class UtilsTimedGuvi(object):
             if timedDF.shape[0] == 0:
                 print "********NO DATA FOUND, CHECK FOR A " +\
                          "DIFFERENT TIME OR INCREASE TIMEDEL********"
+            # Sort the DF by time, since orbits mess up plotting
+            timedDF = timedDF.sort_values('date')
             filteredDict[key] = timedDF
         return filteredDict
 
