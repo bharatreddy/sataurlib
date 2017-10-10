@@ -214,7 +214,7 @@ class UtilsTimedGuvi(object):
     def overlay_sat_data(self, filteredDict, mapHandle, ax,\
                         plotType='d135', overlayTime=True,\
                         overlayTimeInterval=5, timeMarker='o',\
-                        timeMarkerSize=2., timeColor="grey",\
+                        timeMarkerSize=2., timeColor="grey", zorder=5., timeZorder=7.,\
                          timeFontSize=8., plotCBar=True, autoScale=True,\
                           vmin=0., vmax=1000., plotTitle=True,\
                           titleString=None, inpTime=None,alpha=0.6,\
@@ -281,11 +281,11 @@ class UtilsTimedGuvi(object):
                 vmax = numpy.round( numpy.max( timedDisk )/500. )*500.
             xVecs, yVecs = mapHandle(timedLons, timedLats, coords=coords)
             # timedPlot = mapHandle.scatter(xVecs, yVecs, c=timedDisk, s=75.,\
-            #            cmap=ssusiCmap, alpha=0.7, zorder=5., \
+            #            cmap=ssusiCmap, alpha=0.7, zorder=zorder, \
             #                      edgecolor='none', marker="s",\
             #                       vmin=vmin, vmax=vmax)
             timedPlot = mapHandle.pcolormesh(xVecs, yVecs,\
-                            timedDisk, zorder=5.,
+                            timedDisk, zorder=zorder,
                             vmin=0, vmax=vmax,
                             ax=ax, alpha=alpha, cmap=ssusiCmap)
             timedPlot.set_rasterized(True)
@@ -366,7 +366,7 @@ class UtilsTimedGuvi(object):
                                          timePlotLatArr, coords=coords)
                         mapHandle.plot(xTVecs, yTVecs,\
                              marker=timeMarker,color=timeColor,\
-                              markersize=timeMarkerSize, zorder=7.)
+                              markersize=timeMarkerSize, zorder=timeZorder)
                         timeStr = allDayDatesList[dd].strftime("%H:%M")
                         # Write Sat names used in plotting
                         if pixel == 0:
@@ -375,7 +375,7 @@ class UtilsTimedGuvi(object):
                             ax.text(timeXVecs, timeYVecs, timeStr,\
                                 fontsize=timeFontSize,fontweight='bold',
                                 ha='left',va='center',color='k',\
-                                 clip_on=True, zorder=7.)
+                                 clip_on=True, zorder=timeZorder)
             # plot colorbar
             if plotCBar:
                 cbar = plt.colorbar(timedPlot, orientation='vertical')

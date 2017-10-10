@@ -133,7 +133,7 @@ class UtilsSsusi(object):
                             evalStr.format(col) 
                             for col in filterCol]))].reset_index(drop=True)
             if ssusiDF.shape[0] == 0:
-                print "********NO DATA FOUND, CHECK FOR A " +\
+                print "********NO DATA FOUND FOR "  + str(key) + ", CHECK FOR A " +\
                          "DIFFERENT TIME OR INCREASE TIMEDEL********"
             # Sort the DF by time, since orbits mess it up
             ssusiDF = ssusiDF.sort_values('date')
@@ -217,7 +217,7 @@ class UtilsSsusi(object):
     def overlay_sat_data(self, filteredDict, mapHandle, ax,\
                         satList=["F18", "F17", "F16"], plotType='d135',\
                         overlayTime=True, overlayTimeInterval=5, timeLinestyle=':',\
-                        timeColor="black", timeFontSize=8.,\
+                        timeColor="black", timeFontSize=8., zorder=5., timeZorder=7.,\
                          plotCBar=True, autoScale=True, vmin=0., vmax=1000.,\
                          plotTitle=True, titleString=None, inpTime=None,alpha=0.5,\
                          markSatName=True, coords="mag", ssusiCmap="Greens"):
@@ -282,11 +282,11 @@ class UtilsSsusi(object):
                 vmax = numpy.round( numpy.max( ssusiDisk )/500. )*500.
             xVecs, yVecs = mapHandle(ssusiLons, ssusiLats, coords=coords)
             # ssusiPlot = mapHandle.scatter(xVecs, yVecs, c=ssusiDisk, s=10.,\
-            #            cmap=ssusiCmap, alpha=0.7, zorder=5., \
+            #            cmap=ssusiCmap, alpha=0.7, zorder=zorder, \
             #                      edgecolor='none', marker="s",\
             #                       vmin=vmin, vmax=vmax)
             ssusiPlot = mapHandle.pcolormesh(xVecs, yVecs,\
-                            ssusiDisk, zorder=5.,
+                            ssusiDisk, zorder=zorder,
                             vmin=0, vmax=vmax,
                             ax=ax, alpha=alpha, cmap=ssusiCmap)
             ssusiPlot.set_rasterized(True)
@@ -380,9 +380,9 @@ class UtilsSsusi(object):
                             ax.text(timeXVecs, timeYVecs, timeStr,\
                                 fontsize=timeFontSize,fontweight='bold',
                                 ha='left',va='center',color='k',\
-                                 clip_on=True, zorder=7.)
+                                 clip_on=True, zorder=timeZorder)
                     mapHandle.plot([xTVecFirst, xTVecLast], [yTVecFirst, yTVecLast],\
-                                 timeColor, zorder=7., linestyle=timeLinestyle)
+                                 timeColor, zorder=timeZorder, linestyle=timeLinestyle)
             # plot colorbar
             if plotCBar:
                 cbar = plt.colorbar(ssusiPlot, orientation='vertical')
