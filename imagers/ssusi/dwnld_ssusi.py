@@ -15,7 +15,7 @@ class SSUSIDownload(object):
         Set up some constants.
         Used for fitting.
         """
-        self.baseUrl = "https://ssusi.jhuapl.edu/"
+        self.baseUrl = "http://ssusi.jhuapl.edu/"
         self.outBaseDir = outBaseDir
 
     def download_files(self, inpDate, dataTypeList,\
