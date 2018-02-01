@@ -9,6 +9,10 @@ imagers/timed/__init__.py
 imagers/timed/dwnld_timed_guvi.py
 imagers/timed/read_timed_guvi.py
 imagers/timed/timed_utils.py
+poes/__init__.py
+poes/dwnld_poes.py
+poes/get_aur_bnd.py
+poes/poes_utils.py
 sataurlib.egg-info/PKG-INFO
 sataurlib.egg-info/SOURCES.txt
 sataurlib.egg-info/dependency_links.txt
