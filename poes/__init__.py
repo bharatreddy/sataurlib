@@ -1,1 +1,1 @@
-__all__ = ["dwnld_poes", "get_aur_bnd", "poes_utils"]
+__all__ = ["dwnld_poes", "get_aur_bnd", "poes_plot_utils"]

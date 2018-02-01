@@ -1,3 +1,7 @@
-Tools to download, process and plot data from DMSP SSUSI and TIMED GUVI. Please refer the documentation of the respective satellites before using the data for analysis and publication.
-DMSP SSUSI website - https://ssusi.jhuapl.edu/
-TIMED GUVI website - http://guvitimed.jhuapl.edu/
+The repo currently hosts tools to download, process and plot data from some instruments onboard three satellites.
+1) TIMED GUVI instrument - http://guvitimed.jhuapl.edu/
+2) DMSP SSUSI instrument - https://ssusi.jhuapl.edu/
+3) POES - https://satdat.ngdc.noaa.gov/
+A setup.py script is provided for installation. Dependencies can be installed using the requirements.txt repo.
+A few examples are presented in the "docs" folder.
+Please refer the documentation of the respective satellites before using the data for analysis and/or publication purposes.

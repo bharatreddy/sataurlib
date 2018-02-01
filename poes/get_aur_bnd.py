@@ -475,6 +475,7 @@ class PoesAur(object):
         # Given the boundary locations obtained
         # from different satellites, estimate the
         # auroral oval boundary by fitting a circle!
+        firstWrite = True
         for currTime in bndLocDF["time"].unique():
             try:
                 currBndDF = bndLocDF[ bndLocDF["time"] == currTime ]
@@ -528,10 +529,11 @@ class PoesAur(object):
                 aurFitDF["time"] = cnvrtTime.strftime( "%H%M" )
                 outFitResFil = outDir + "poes-fit-" +\
                         cnvrtTime.strftime( "%Y%m%d" ) + ".txt"
-                if cnvrtTime.strftime( "%H%M" ) == "0000":
+                if firstWrite:
                     with open(outFitResFil, 'w') as fra:
-                        aurFitDF.to_csv(fra, header=False,\
+                        aurFitDF.to_csv(fra, header=True,\
                                           index=False, sep=' ' )
+                    firstWrite = False
                 else:
                     with open(outFitResFil, 'a') as fra:
                         aurFitDF.to_csv(fra, header=False,\

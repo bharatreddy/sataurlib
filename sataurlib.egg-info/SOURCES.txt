@@ -12,7 +12,7 @@ imagers/timed/timed_utils.py
 poes/__init__.py
 poes/dwnld_poes.py
 poes/get_aur_bnd.py
-poes/poes_utils.py
+poes/poes_plot_utils.py
 sataurlib.egg-info/PKG-INFO
 sataurlib.egg-info/SOURCES.txt
 sataurlib.egg-info/dependency_links.txt
