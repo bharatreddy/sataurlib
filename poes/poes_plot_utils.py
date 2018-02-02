@@ -8,6 +8,7 @@ from scipy.interpolate import interp1d
 import aacgmv2
 import seaborn as sns
 import netCDF4
+from poes import get_aur_bnd
 
 class PlotUtils(object):
     """
@@ -27,6 +28,46 @@ class PlotUtils(object):
             print "Currently only mag, mlt coords are supported!"
             return None
         self.pltCoords = pltCoords
+
+    def overlay_closest_sat_pass( self, selTime,  mapHandle, ax,\
+                     rawSatDir, overlayElecFlux=True,\
+                     satList=["m01", "n15", "n19", "n18"], markerSize=15,\
+                     overlayTime=True, inpCmap=ListedColormap(sns.color_palette("BuPu")),\
+                     timeMarkerSize=2., zorder=5., alpha=0.6, vmin=0, vmax=5,\
+                      timeZorder=7., timeFontSize=6., plotCBar=True,overlayTimeInterval=5,\
+                      autoScale=True, plotTitle=True,titleString=None ):
+        # Given a timeRange and satellite list plot 
+        # corresponding satellite passes
+        # If overlayElecFlux is true! Electron flux is overlayed
+        # else proton flux is overlayed!
+        fileList = []
+        fileCnt = 0
+        for root, dirs, files in os.walk(rawSatDir):
+            for fNum, fName in enumerate(files):
+                currFile = root + fName    
+                if ( (currFile.endswith(".nc")) &\
+                        ("poes" in currFile.lower()) &\
+                         (self.inpDate.strftime("%Y%m%d") in currFile) ):
+                    fileList.append( currFile )
+                    fileCnt += 1
+                    if fileCnt >= 7:
+                        print "got 7 satellites! skipping"
+                        break
+        # We now have the files
+        # get only the required sats
+        # This is more efficient instead of
+        # checking earlier
+        rawPoesFileList = []
+        for csat in satList:
+            for ff in fileList:
+                if csat in ff:
+                    rawPoesFileList.append( ff )
+        ( poesAllEleDataDF, poesAllProDataDF ) = self.read_poes_data(rawPoesFileList)
+        # get the selected dates
+        poesRdObj = get_aur_bnd.PoesAur()
+        aurPassDF = poesRdObj.get_closest_sat_passes( poesAllEleDataDF,\
+                                    poesAllProDataDF, [selTime, selTime] )
+        
 
 
     def overlay_sat_pass( self, timeRange,  mapHandle, ax,\
