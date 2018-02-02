@@ -10,6 +10,23 @@ import seaborn as sns
 import netCDF4
 from poes import get_aur_bnd
 
+if __name__ == "__main__":
+    import poes_plot_utils
+    from davitpy import utils
+    pltDate = datetime.datetime(2015,4,9)
+    timeRange = [ datetime.datetime(2015,4,9,7), datetime.datetime(2015,4,9,8) ]
+    selTime = datetime.datetime(2015,4,9,7,30)
+    coords = "mlt"
+
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(1,1,1)
+    m = utils.plotUtils.mapObj(boundinglat=40., coords=coords, lat_0=90., lon_0=0, datetime=selTime)
+    poesPltObj = poes_plot_utils.PlotUtils(pltDate, pltCoords=coords)
+    poesPltObj.overlay_closest_sat_pass(selTime,m,ax,rawSatDir="/tmp/poes/raw/")
+    # poesPltObj.overlay_equ_bnd(selTime,m,ax,rawSatDir="/tmp/poes/raw/")
+    poesPltObj.overlay_equ_bnd(selTime,m,ax,inpFileName="/tmp/poes/bnd/poes-fit-20150409.txt")
+    fig.savefig("/tmp/poes-demo.pdf",bbox_inches='tight')
+
 class PlotUtils(object):
     """
     A class to plot data from POES satellites.
@@ -29,8 +46,59 @@ class PlotUtils(object):
             return None
         self.pltCoords = pltCoords
 
+    def overlay_equ_bnd( self, selTime, mapHandle, ax,\
+                     rawSatDir=None, inpFileName=None, overlayElecFlux=True,\
+                      plotTitle=False,titleString=None,\
+                      linestyle="--", linewidth=2, linecolor='k' ):
+        # Given a time overlay the estimated equatorward auroral oval
+        # boundary on a map. Currently only the northern hemisphere and 
+        # the electron precipitation boundary is supported.
+        # If you set an input file to read from, the process is much faster
+        # as there is no requirement to calculate the boundary location!!
+        if inpFileName is None:
+            if rawSatDir is None:
+                print "need atleast one of inpFileName" +\
+                         " or the rawSatDir to estimate the boundary"
+                return None
+            else:
+                print "reading raw data from-->", rawSatDir
+                 # Read data from the POES files
+                poesRdObj = get_aur_bnd.PoesAur()
+                ( poesAllEleDataDF, poesAllProDataDF ) = poesRdObj.read_poes_data_files(\
+                                                            poesRawDate=selTime,\
+                                                            poesRawDir="/tmp/poes/raw/" )
+                aurPassDF = poesRdObj.get_closest_sat_passes( poesAllEleDataDF,\
+                                    poesAllProDataDF, [selTime, selTime] )
+                # determine auroral boundaries from all the POES satellites
+                # at a given time. The procedure is described in the code! 
+                # go over it!!!
+                eqBndLocsDF = poesRdObj.get_nth_ele_eq_bnd_locs( aurPassDF,\
+                                                                poesAllEleDataDF )
+                estBndDF = poesRdObj.fit_circle_aurbnd(eqBndLocsDF, save_to_file=False)
+        else:
+            print "reading boundary data from-->", inpFileName
+            colTypeDict = { "MLAT" : numpy.float64, "MLON" : numpy.float64,\
+                             "date":numpy.str, "time":numpy.str }
+            estBndDF = pandas.read_csv(inpFileName, delim_whitespace=True,\
+                                             dtype=colTypeDict)
+            # get the selected time
+            estBndDF = estBndDF[ ( estBndDF["date"] == selTime.strftime("%Y%m%d") ) &\
+                                ( estBndDF["time"] == selTime.strftime("%H%M") )\
+                                 ].reset_index(drop=True)
+        # convert to MLT coords if needed
+        if self.pltCoords == "mlt":
+            estBndDF["selTime"] = selTime
+            estBndDF["MLT"] = estBndDF.apply( self.get_mlt, axis=1 )
+            xVecs, yVecs = mapHandle(estBndDF["MLT"].values*15., estBndDF["MLAT"], coords=self.pltCoords)
+        else:
+            xVecs, yVecs = mapHandle(estBndDF["MLON"].values, estBndDF["MLAT"], coords=self.pltCoords)
+        mapHandle.plot(xVecs, yVecs, color=linecolor,\
+                 linewidth=linewidth,linestyle=linestyle)
+
+
+
     def overlay_closest_sat_pass( self, selTime,  mapHandle, ax,\
-                     rawSatDir, overlayElecFlux=True,\
+                     rawSatDir, overlayElecFlux=True, hemisphere="north",\
                      satList=["m01", "n15", "n19", "n18"], markerSize=15,\
                      overlayTime=True, inpCmap=ListedColormap(sns.color_palette("BuPu")),\
                      timeMarkerSize=2., zorder=5., alpha=0.6, vmin=0, vmax=5,\
@@ -67,6 +135,123 @@ class PlotUtils(object):
         poesRdObj = get_aur_bnd.PoesAur()
         aurPassDF = poesRdObj.get_closest_sat_passes( poesAllEleDataDF,\
                                     poesAllProDataDF, [selTime, selTime] )
+        # merge with poesData and choose the selected interval
+        if overlayElecFlux:
+            poesRawPlotDF = pandas.merge( poesAllEleDataDF, aurPassDF, on="sat" )
+            if hemisphere == "north":
+                poesRawPlotDF = poesRawPlotDF[ (poesRawPlotDF["date"] >=\
+                                                 poesRawPlotDF["start_time_nth"]) &\
+                                         (poesRawPlotDF["date"] <=\
+                                                 poesRawPlotDF["end_time_nth"]) ]
+            else:
+                poesRawPlotDF = poesRawPlotDF[ (poesRawPlotDF["date"] >=\
+                                             poesRawPlotDF["start_time_sth"]) &\
+                                         (poesRawPlotDF["date"] <=\
+                                                 poesRawPlotDF["end_time_sth"]) ]
+            fluxVals = poesRawPlotDF["log_ele_flux"]
+        else:
+            poesRawPlotDF = pandas.merge( poesAllProDataDF, aurPassDF, on="sat" )
+            if hemisphere == "north":
+                poesRawPlotDF = poesRawPlotDF[ (poesRawPlotDF["date"] >=\
+                                                 poesRawPlotDF["start_time_nth"]) &\
+                                         (poesRawPlotDF["date"] <=\
+                                                 poesRawPlotDF["end_time_nth"]) ]
+            else:
+                poesRawPlotDF = poesRawPlotDF[ (poesRawPlotDF["date"] >=\
+                                             poesRawPlotDF["start_time_sth"]) &\
+                                         (poesRawPlotDF["date"] <=\
+                                                 poesRawPlotDF["end_time_sth"]) ]
+            fluxVals = poesRawPlotDF["log_pro_flux"].values
+        # get color scales
+        if autoScale:
+            vmin = 0.
+            vmax = numpy.round( numpy.max( fluxVals )/5 )*5.
+        # get required data for plotting
+        poesLats = poesRawPlotDF["aacgm_lat_foot"].values
+        if self.pltCoords == "mag":
+            poesLons = poesRawPlotDF["aacgm_lon_foot"].values
+            xVecs, yVecs = mapHandle(poesLons, poesLats, coords=self.pltCoords)
+        else:
+            poesLons = poesRawPlotDF["MLT"].values
+            # NOTE in davitpy MLT ranges between 0 and 360.
+            xVecs, yVecs = mapHandle(poesLons*15., poesLats, coords=self.pltCoords)
+        poesPlot = mapHandle.scatter(xVecs, yVecs,\
+                            c=fluxVals, s=markerSize, zorder=zorder,
+                            vmin=vmin, vmax=vmax, ax=ax, alpha=alpha, cmap=inpCmap)
+        # plot colorbar
+        if plotCBar:
+            cbar = plt.colorbar(poesPlot, orientation='vertical')
+            if overlayElecFlux:
+                cbar.set_label(r"Log electron Flux $ [ergs\ cm^{-2}\ s^{-2}]$", size=10)
+            else:
+                cbar.set_label(r"Log proton Flux $ [ergs\ cm^{-2}\ s^{-2}]$", size=10)
+        # overlay time
+        if overlayTime:
+            for ss in satList:
+                uniqueTimeList = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["date"].unique()
+                timeDiff = ( uniqueTimeList.max() -\
+                                 uniqueTimeList.min()\
+                                  ).astype('timedelta64[m]')
+                delRange = overlayTimeInterval*\
+                            uniqueTimeList.shape[0]/timeDiff.astype('int')
+                minDate = datetime.datetime.utcfromtimestamp(\
+                                uniqueTimeList.min().tolist()/1e9)
+                maxDate = datetime.datetime.utcfromtimestamp(\
+                                uniqueTimeList.max().tolist()/1e9)
+                # get lists of datetimes to plot 
+                allDayDatesList = []
+                allDayTSList = []
+                currDt = minDate
+                while currDt <= maxDate:
+                    ts = (numpy.datetime64(currDt) - \
+                                numpy.datetime64('1970-01-01T00:00:00Z')\
+                                ) / numpy.timedelta64(1, 's')
+                    allDayTSList.append( ts )
+                    allDayDatesList.append( currDt )
+                    currDt += datetime.timedelta(minutes=overlayTimeInterval)
+                    if self.pltCoords == "mlt":
+                        poesLats = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["aacgm_lat_foot"].values
+                        # Remember in davitpy mlt ranges between 0,360
+                        poesLons = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["MLT"].values * 15.
+                    else:
+                        poesLats = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["aacgm_lat_foot"].values
+                        poesLons = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["aacgm_lon_foot"].values
+                        
+                    poesTimes = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["date"].values
+                    satTSArr = (poesTimes - \
+                            numpy.datetime64('1970-01-01T00:00:00Z')\
+                            ) / numpy.timedelta64(1, 's')
+                    # sometimes there aren't sufficient points
+                    # skip in such a case
+                    if len(satTSArr) <= 1:
+                        continue
+                    # Interpolate the values to get times
+                    for dd in range( len(allDayDatesList) ):
+                        (x,y) = self.pol2cart( poesLats, poesLons )
+                        fXIn = interp1d(satTSArr, x)
+                        fYIn = interp1d(satTSArr, y)
+                        if allDayTSList[dd].size <= 2:
+                            continue
+                        xArr = fXIn(allDayTSList[dd])
+                        yArr = fYIn(allDayTSList[dd])
+                        (timePlotLatArr, timePlotLonArr) = self.cart2pol( xArr, yArr )
+                        xTVecs, yTVecs = mapHandle(timePlotLonArr,\
+                                         timePlotLatArr, coords=self.pltCoords)
+                        timeStr = allDayDatesList[dd].strftime("%H:%M") + "(" + str(ss) + ")"
+                        timeXVecs, timeYVecs = mapHandle(timePlotLonArr,\
+                                 timePlotLatArr, coords=self.pltCoords)
+                        ax.text(timeXVecs, timeYVecs, timeStr,\
+                                fontsize=timeFontSize,
+                                ha='left',va='center',color='grey',\
+                                 clip_on=True, zorder=timeZorder)
+
+        # Title
+        if plotTitle:
+            if titleString is not None:
+                plt.title(titleString)
+            else:
+                inpTimeStr = selTime.strftime("%Y-%m-%d  %H:%M") +" UT" 
+                plt.title( inpTimeStr )
         
 
 
@@ -168,6 +353,10 @@ class PlotUtils(object):
                     satTSArr = (poesTimes - \
                             numpy.datetime64('1970-01-01T00:00:00Z')\
                             ) / numpy.timedelta64(1, 's')
+                    # sometimes there aren't sufficient points
+                    # skip in such a case
+                    if len(satTSArr) <= 1:
+                        continue
                     # Interpolate the values to get times
                     for dd in range( len(allDayDatesList) ):
                         (x,y) = self.pol2cart( poesLats, poesLons )
@@ -287,3 +476,8 @@ class PlotUtils(object):
         x = colat * numpy.cos(numpy.deg2rad(lon))
         y = colat * numpy.sin(numpy.deg2rad(lon))
         return (x, y)
+
+    def get_mlt(self,row):
+        # given the est bnd df, time get MLT from MLON
+        return numpy.round( aacgmv2.convert_mlt( row["MLON"],\
+                             row["selTime"] ), 1 )

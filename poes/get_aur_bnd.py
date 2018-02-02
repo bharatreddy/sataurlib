@@ -23,9 +23,9 @@ class PoesAur(object):
         self.mlonDiffOtrEndCutoff = 50.
         self.delLatCutoff = 2.
         self.delCtimeCutoff = 60. #min
-        # Roughly corresponds to 1 deg in MLAT
-        self.gauss_smooth_sigma = 5. 
-        self.diffElctrCutoffBnd = 0.1
+        # Set some parameters for gaussian fitting!
+        self.gauss_smooth_sigma = 2#5. 
+        self.diffElctrCutoffBnd = 0.15#0.1
         # More than an order of magnitude, remember its a log scale
         self.filtEleFluxCutoffMagn = 1.25 
 
@@ -148,7 +148,6 @@ class PoesAur(object):
             outDFList = []
             ctime = timeRange[0]
             while ctime <= timeRange[1]:
-                ctime += timeInterval
                 # We only need those times when POES was above self.minCutoffFitLat(45) MLAT
                 poesAllEleDataDF = poesAllEleDataDF[ \
                                 ( abs( poesAllEleDataDF["aacgm_lat_foot"] ) >= self.minCutoffFitLat )\
@@ -307,6 +306,7 @@ class PoesAur(object):
                 currselTimeRangeDF = pandas.merge( selTimeRangeNthDF, selTimeRangeSthDF,\
                                  on=["sat", "selTime"], how="outer", suffixes=( '_nth', '_sth' ) )
                 outDFList.append( currselTimeRangeDF )
+                ctime += timeInterval
             # Concat all the DFs for differnt time ranges
             selTimeRangeDF = pandas.concat( outDFList )
             return selTimeRangeDF
@@ -471,11 +471,20 @@ class PoesAur(object):
             print "closest pass failed!!"
             return None
 
-    def fit_circle_aurbnd( self, bndLocDF, outDir="./" ):
+    def fit_circle_aurbnd( self, bndLocDF, save_to_file=True,\
+             fileFormat="txt",outDir="./" ):
         # Given the boundary locations obtained
         # from different satellites, estimate the
         # auroral oval boundary by fitting a circle!
+        # make a list of DFs to return at the end
+        fitDFList = []
         firstWrite = True
+        # check if fileformat to save are in the right format!
+        if save_to_file:
+            if fileFormat not in ["txt", "csv"]:
+                print "only txt and csv file\
+                         formats allowed, TRY AGAIN!"
+                return None
         for currTime in bndLocDF["time"].unique():
             try:
                 currBndDF = bndLocDF[ bndLocDF["time"] == currTime ]
@@ -527,17 +536,22 @@ class PoesAur(object):
                 cnvrtTime = pandas.to_datetime(str(currTime)) 
                 aurFitDF["date"] = cnvrtTime.strftime( "%Y%m%d" )
                 aurFitDF["time"] = cnvrtTime.strftime( "%H%M" )
-                outFitResFil = outDir + "poes-fit-" +\
-                        cnvrtTime.strftime( "%Y%m%d" ) + ".txt"
-                if firstWrite:
-                    with open(outFitResFil, 'w') as fra:
-                        aurFitDF.to_csv(fra, header=True,\
-                                          index=False, sep=' ' )
-                    firstWrite = False
-                else:
-                    with open(outFitResFil, 'a') as fra:
-                        aurFitDF.to_csv(fra, header=False,\
-                                          index=False, sep=' ' )
+                if save_to_file:
+                    outFitResFil = outDir + "poes-fit-" +\
+                            cnvrtTime.strftime( "%Y%m%d" ) + "." + fileFormat
+                    if firstWrite:
+                        with open(outFitResFil, 'w') as fra:
+                            aurFitDF.to_csv(fra, header=True,\
+                                              index=False, sep=' ' )
+                            print "saving to file--->", outFitResFil
+                        firstWrite = False
+                    else:
+                        with open(outFitResFil, 'a') as fra:
+                            aurFitDF.to_csv(fra, header=False,\
+                                              index=False, sep=' ' )                
+                    fitDFList.append( aurFitDF )
             except:
                 print "couldnt get a fit! skipping!"
                 continue
+        if len(fitDFList) > 0:
+            return pandas.concat(fitDFList)

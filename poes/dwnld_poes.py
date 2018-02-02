@@ -75,7 +75,8 @@ class PoesDwnld(object):
                 if outDir != "./":
                     # check if file exists and then transfer!
                     if os.path.isfile(outDir + "/" + currFileName):
-                        print "file exists! check again..."
+                        print "file exists in outDir! check again..."
+                        os.remove(currFileName)
                     else:
                         print "moving file to destination folder", currFileName
                         print "outDir-->", outDir
