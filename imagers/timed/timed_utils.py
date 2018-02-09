@@ -212,13 +212,14 @@ class UtilsTimedGuvi(object):
         return (x, y)
         
     def overlay_sat_data(self, filteredDict, mapHandle, ax,\
-                        plotType='d135', overlayTime=True,\
-                        overlayTimeInterval=5, timeMarker='o',\
-                        timeMarkerSize=2., timeColor="grey", zorder=5., timeZorder=7.,\
+                         plotType='d135', overlayTime=True,\
+                         overlayTimeInterval=5, timeMarker='o',\
+                         timeMarkerSize=2., timeColor="grey", timeTextColor="k",
+                         zorder=5., timeZorder=7.,\
                          timeFontSize=8., plotCBar=True, autoScale=True,\
-                          vmin=0., vmax=1000., plotTitle=True,\
-                          titleString=None, inpTime=None,alpha=0.6,\
-                          coords="mag", timedguviCmap="Greens"):
+                         vmin=0., vmax=1000., plotTitle=True,\
+                         titleString=None, inpTime=None,alpha=0.6,\
+                         coords="mag", timedguviCmap="Greens"):
         """
         Plot TIMED GUVI data on a map
         # overlayTimeInterval is in minutes
@@ -374,7 +375,7 @@ class UtilsTimedGuvi(object):
                                  timePlotLatArr, coords=coords)
                             ax.text(timeXVecs, timeYVecs, timeStr,\
                                 fontsize=timeFontSize,fontweight='bold',
-                                ha='left',va='center',color='k',\
+                                ha='left',va='center',color=timeTextColor,\
                                  clip_on=True, zorder=timeZorder)
             # plot colorbar
             if plotCBar:
