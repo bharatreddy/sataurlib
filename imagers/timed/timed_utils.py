@@ -216,7 +216,8 @@ class UtilsTimedGuvi(object):
                          overlayTimeInterval=5, timeMarker='o',\
                          timeMarkerSize=2., timeColor="grey", timeTextColor="k",
                          zorder=5., timeZorder=7.,\
-                         timeFontSize=8., plotCBar=True, autoScale=True,\
+                         timeFontSize=8., plotCBar=True, cbar_shrink=0.7,
+                         autoScale=True,\
                          vmin=0., vmax=1000., plotTitle=True,\
                          titleString=None, inpTime=None,alpha=0.6,\
                          coords="mag", timedguviCmap="Greens"):
@@ -379,7 +380,8 @@ class UtilsTimedGuvi(object):
                                  clip_on=True, zorder=timeZorder)
             # plot colorbar
             if plotCBar:
-                cbar = plt.colorbar(timedPlot, orientation='vertical')
+                cbar = plt.colorbar(timedPlot, orientation='vertical',
+                                    shrink=cbar_shrink)
                 cbar.set_label('Rayleighs', size=14)
             # Title
             if plotTitle:
