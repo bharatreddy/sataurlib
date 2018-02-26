@@ -399,7 +399,7 @@ class PlotUtils(object):
                 if os.path.getsize(f) < 1096.:
                     continue
                 poesRawData = netCDF4.Dataset(f)
-                poesDF = pandas.DataFrame( poesRawData.variables['time'][:], columns=[ "timestamp" ] )
+                poesDF = pandas.DataFrame( poesRawData.variables['time'][:].data, columns=[ "timestamp" ] )
                 poesDF['date'] = pandas.to_datetime(poesDF['timestamp'], unit='ms')
                 poesDF["alt"] = poesRawData.variables['alt'][:]
                 poesDF["aacgm_lat_foot"] = poesRawData.variables['aacgm_lat_foot'][:]
@@ -455,7 +455,7 @@ class PlotUtils(object):
             poesAllProDataDF["time"] = poesAllProDataDF["date"].map(lambda x: x.strftime('%H%M'))
             return ( poesAllEleDataDF, poesAllProDataDF )
         except:
-            print "data read failed-->" + fileList
+            print "data read failed-->" + str(fileList)
             return ( None, None )
 
 

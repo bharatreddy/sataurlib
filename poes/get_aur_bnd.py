@@ -24,8 +24,8 @@ class PoesAur(object):
         self.delLatCutoff = 2.
         self.delCtimeCutoff = 60. #min
         # Set some parameters for gaussian fitting!
-        self.gauss_smooth_sigma = 2#5. 
-        self.diffElctrCutoffBnd = 0.15#0.1
+        self.gauss_smooth_sigma = 1#2 
+        self.diffElctrCutoffBnd = 0.1#0.15
         # More than an order of magnitude, remember its a log scale
         self.filtEleFluxCutoffMagn = 1.25 
 
