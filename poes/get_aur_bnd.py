@@ -80,7 +80,7 @@ class PoesAur(object):
                 if os.path.getsize(f) < 1096.:
                     continue
                 poesRawData = netCDF4.Dataset(f)
-                poesDF = pandas.DataFrame( poesRawData.variables['time'][:], columns=[ "timestamp" ] )
+                poesDF = pandas.DataFrame( poesRawData.variables['time'][:].data, columns=[ "timestamp" ] )
                 poesDF['date'] = pandas.to_datetime(poesDF['timestamp'], unit='ms')
                 poesDF["alt"] = poesRawData.variables['alt'][:]
                 poesDF["aacgm_lat_foot"] = poesRawData.variables['aacgm_lat_foot'][:]
