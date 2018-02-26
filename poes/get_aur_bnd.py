@@ -136,7 +136,7 @@ class PoesAur(object):
             poesAllProDataDF["time"] = poesAllProDataDF["date"].map(lambda x: x.strftime('%H%M'))
             return ( poesAllEleDataDF, poesAllProDataDF )
         except:
-            print "data read failed-->" + fileList
+            print "data read failed-->" + str(fileList)
             return ( None, None )
 
     def get_closest_sat_passes( self, poesAllEleDataDF, poesAllProDataDF, timeRange,\
