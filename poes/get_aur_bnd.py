@@ -499,11 +499,11 @@ class PoesAur(object):
                 equMltArr = currBndDF["equator_mlt"].values
                 # discard nan values
                 poleMlatArr = poleMlatArr[~numpy.isnan(poleMlatArr)]
-                poleMlonArr = poleMlonArr[~numpy.isnan(poleMlatArr)]
-                poleMltArr = poleMltArr[~numpy.isnan(poleMlatArr)]
+                poleMlonArr = poleMlonArr[~numpy.isnan(poleMlonArr)]
+                poleMltArr = poleMltArr[~numpy.isnan(poleMltArr)]
                 equMlatArr = equMlatArr[~numpy.isnan(equMlatArr)]
-                equMlonArr = equMlonArr[~numpy.isnan(equMlatArr)]
-                equMltArr = equMltArr[~numpy.isnan(equMlatArr)]
+                equMlonArr = equMlonArr[~numpy.isnan(equMlonArr)]
+                equMltArr = equMltArr[~numpy.isnan(equMltArr)]
                 # Concat the arrays together
                 latPoesAll = numpy.append( poleMlatArr, equMlatArr )
                 lonPoesAll = numpy.append( poleMlonArr, equMlonArr )
