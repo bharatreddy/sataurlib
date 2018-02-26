@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 class UtilsTimedGuvi(object):
     """
-    A class to Download SSUSI data
+    A class to Download TIMED GUVI data
     given a date and datatype!
     """
     def __init__(self, inpDir, fileDate, satList=[ "F18", "F17", "F16" ]):
@@ -23,7 +23,7 @@ class UtilsTimedGuvi(object):
         dirList = []
         self.fileDate = fileDate
         currDtStr = self.fileDate.strftime("%Y%m%d")
-        # Very similar to what we do for SSUSI
+        # Very similar to what we do for TIMED GUVI
         # except we just have one sat.
         currFname = inpDir + currDtStr + ".txt"
         # check if file exists
@@ -212,15 +212,17 @@ class UtilsTimedGuvi(object):
         return (x, y)
         
     def overlay_sat_data(self, filteredDict, mapHandle, ax,\
-                        plotType='d135', overlayTime=True,\
-                        overlayTimeInterval=5, timeMarker='o',\
-                        timeMarkerSize=2., timeColor="grey", zorder=5., timeZorder=7.,\
-                         timeFontSize=8., plotCBar=True, autoScale=True,\
-                          vmin=0., vmax=1000., plotTitle=True,\
-                          titleString=None, inpTime=None,alpha=0.6,\
-                          coords="mag", ssusiCmap="Greens"):
+                         plotType='d135', overlayTime=True,\
+                         overlayTimeInterval=5, timeMarker='o',\
+                         timeMarkerSize=2., timeColor="grey", timeTextColor="k",
+                         zorder=5., timeZorder=7.,\
+                         timeFontSize=8., plotCBar=True, cbar_shrink=0.7,
+                         autoScale=True,\
+                         vmin=0., vmax=1000., plotTitle=True,\
+                         titleString=None, inpTime=None,alpha=0.6,\
+                         coords="mag", timedguviCmap="Greens"):
         """
-        Plot SSUSI data on a map
+        Plot TIMED GUVI data on a map
         # overlayTimeInterval is in minutes
         """
         # Loop through and read data
@@ -281,13 +283,13 @@ class UtilsTimedGuvi(object):
                 vmax = numpy.round( numpy.max( timedDisk )/500. )*500.
             xVecs, yVecs = mapHandle(timedLons, timedLats, coords=coords)
             # timedPlot = mapHandle.scatter(xVecs, yVecs, c=timedDisk, s=75.,\
-            #            cmap=ssusiCmap, alpha=0.7, zorder=zorder, \
+            #            cmap=timedguviCmap, alpha=0.7, zorder=zorder, \
             #                      edgecolor='none', marker="s",\
             #                       vmin=vmin, vmax=vmax)
             timedPlot = mapHandle.pcolormesh(xVecs, yVecs,\
                             timedDisk, zorder=zorder,
                             vmin=0, vmax=vmax,
-                            ax=ax, alpha=alpha, cmap=ssusiCmap)
+                            ax=ax, alpha=alpha, cmap=timedguviCmap)
             timedPlot.set_rasterized(True)
             # overlay time
             if overlayTime:
@@ -345,8 +347,8 @@ class UtilsTimedGuvi(object):
                             [timedDF.columns[pandas.Series(\
                             timedDF.columns).str.startswith('glon')\
                             ]].values
-                timeSSusiTimes = timedDF["date"].values
-                satTSArr = (timeSSusiTimes - \
+                timeTimedGuviTimes = timedDF["date"].values
+                satTSArr = (timeTimedGuviTimes - \
                             numpy.datetime64('1970-01-01T00:00:00Z')\
                             ) / numpy.timedelta64(1, 's')
                 # Interpolate the values to get times
@@ -374,11 +376,12 @@ class UtilsTimedGuvi(object):
                                  timePlotLatArr, coords=coords)
                             ax.text(timeXVecs, timeYVecs, timeStr,\
                                 fontsize=timeFontSize,fontweight='bold',
-                                ha='left',va='center',color='k',\
+                                ha='left',va='center',color=timeTextColor,\
                                  clip_on=True, zorder=timeZorder)
             # plot colorbar
             if plotCBar:
-                cbar = plt.colorbar(timedPlot, orientation='vertical')
+                cbar = plt.colorbar(timedPlot, orientation='vertical',
+                                    shrink=cbar_shrink)
                 cbar.set_label('Rayleighs', size=14)
             # Title
             if plotTitle:
@@ -394,7 +397,7 @@ class UtilsTimedGuvi(object):
 
     def convert_aacgm_geo(self, row, a2g=False):
         """
-        For the SSUSI DF convert all the 42
+        For the TIMED GUVI DF convert all the 42
         Given glat, glon and date return
         mlat, mlon and mlt
         """

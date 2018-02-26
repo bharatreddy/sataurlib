@@ -80,7 +80,7 @@ class PoesAur(object):
                 if os.path.getsize(f) < 1096.:
                     continue
                 poesRawData = netCDF4.Dataset(f)
-                poesDF = pandas.DataFrame( poesRawData.variables['time'][:], columns=[ "timestamp" ] )
+                poesDF = pandas.DataFrame( poesRawData.variables['time'][:].data, columns=[ "timestamp" ] )
                 poesDF['date'] = pandas.to_datetime(poesDF['timestamp'], unit='ms')
                 poesDF["alt"] = poesRawData.variables['alt'][:]
                 poesDF["aacgm_lat_foot"] = poesRawData.variables['aacgm_lat_foot'][:]
@@ -136,7 +136,7 @@ class PoesAur(object):
             poesAllProDataDF["time"] = poesAllProDataDF["date"].map(lambda x: x.strftime('%H%M'))
             return ( poesAllEleDataDF, poesAllProDataDF )
         except:
-            print "data read failed-->" + fileList
+            print "data read failed-->" + str(fileList)
             return ( None, None )
 
     def get_closest_sat_passes( self, poesAllEleDataDF, poesAllProDataDF, timeRange,\
@@ -499,11 +499,11 @@ class PoesAur(object):
                 equMltArr = currBndDF["equator_mlt"].values
                 # discard nan values
                 poleMlatArr = poleMlatArr[~numpy.isnan(poleMlatArr)]
-                poleMlonArr = poleMlonArr[~numpy.isnan(poleMlatArr)]
-                poleMltArr = poleMltArr[~numpy.isnan(poleMlatArr)]
+                poleMlonArr = poleMlonArr[~numpy.isnan(poleMlonArr)]
+                poleMltArr = poleMltArr[~numpy.isnan(poleMltArr)]
                 equMlatArr = equMlatArr[~numpy.isnan(equMlatArr)]
-                equMlonArr = equMlonArr[~numpy.isnan(equMlatArr)]
-                equMltArr = equMltArr[~numpy.isnan(equMlatArr)]
+                equMlonArr = equMlonArr[~numpy.isnan(equMlonArr)]
+                equMltArr = equMltArr[~numpy.isnan(equMltArr)]
                 # Concat the arrays together
                 latPoesAll = numpy.append( poleMlatArr, equMlatArr )
                 lonPoesAll = numpy.append( poleMlonArr, equMlonArr )

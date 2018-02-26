@@ -4,7 +4,7 @@ The repo currently hosts tools to download, process and plot data from some inst
 3) POES - https://satdat.ngdc.noaa.gov/
 
 
-A setup.py script is provided for installation. Dependencies can be installed using the requirements.txt repo.
+A setup.py script is provided for installation. Dependencies can be installed using the requirements.txt repo. For example, *pip install -r requirements.txt*
 
 
 A few examples on using this repo are in the "docs" folder.
