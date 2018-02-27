@@ -102,8 +102,9 @@ class PlotUtils(object):
                      satList=["m01", "n15", "n19", "n18"], markerSize=15,\
                      overlayTime=True, inpCmap=ListedColormap(sns.color_palette("BuPu")),\
                      timeMarkerSize=2., zorder=5., alpha=0.6, vmin=0, vmax=5,\
-                      timeZorder=7., timeFontSize=6., plotCBar=True,overlayTimeInterval=5,\
-                      autoScale=True, plotTitle=True,titleString=None ):
+                     timeZorder=7., timeFontSize=6., plotCBar=True, shrink=0.8,
+                     overlayTimeInterval=5,\
+                     autoScale=True, plotTitle=True,titleString=None ):
         # Given a timeRange and satellite list plot 
         # corresponding satellite passes
         # If overlayElecFlux is true! Electron flux is overlayed
@@ -180,7 +181,7 @@ class PlotUtils(object):
                             vmin=vmin, vmax=vmax, ax=ax, alpha=alpha, cmap=inpCmap)
         # plot colorbar
         if plotCBar:
-            cbar = plt.colorbar(poesPlot, orientation='vertical')
+            cbar = plt.colorbar(poesPlot, orientation='vertical', shrink=shrink)
             if overlayElecFlux:
                 cbar.set_label(r"Log electron Flux $ [ergs\ cm^{-2}\ s^{-2}]$", size=10)
             else:
@@ -260,8 +261,9 @@ class PlotUtils(object):
                      satList=["m01", "m02", "n15", "n19", "n18"], markerSize=15,\
                      overlayTime=True, inpCmap=ListedColormap(sns.color_palette("BuPu")),\
                      timeMarkerSize=2., zorder=5., alpha=0.6, vmin=0, vmax=5,\
-                      timeZorder=7., timeFontSize=6., plotCBar=True,overlayTimeInterval=5,\
-                      autoScale=True, plotTitle=True,titleString=None ):
+                     timeZorder=7., timeFontSize=6., plotCBar=True, shrink=0.8,
+                     overlayTimeInterval=5,\
+                     autoScale=True, plotTitle=True,titleString=None ):
         # Given a timeRange and satellite list plot 
         # corresponding satellite passes
         # If overlayElecFlux is true! Electron flux is overlayed
@@ -315,7 +317,7 @@ class PlotUtils(object):
                             vmin=vmin, vmax=vmax, ax=ax, alpha=alpha, cmap=inpCmap)
         # plot colorbar
         if plotCBar:
-            cbar = plt.colorbar(poesPlot, orientation='vertical')
+            cbar = plt.colorbar(poesPlot, orientation='vertical', shrink=shrink)
             cbar.set_label(r"Log Elec. Flux $ [ergs\ cm^{-2}\ s^{-2}]$", size=10)
         # overlay time
         if overlayTime:
