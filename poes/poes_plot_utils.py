@@ -86,16 +86,19 @@ class PlotUtils(object):
                                 ( estBndDF["time"] == selTime.strftime("%H%M") )\
                                  ].reset_index(drop=True)
         # convert to MLT coords if needed
-        if self.pltCoords == "mlt":
-            estBndDF["selTime"] = selTime
-            estBndDF["MLT"] = estBndDF.apply( self.get_mlt, axis=1 )
-            xVecs, yVecs = mapHandle(estBndDF["MLT"].values*15., estBndDF["MLAT"], coords=self.pltCoords)
+        if not estBndDF.empty:
+            if self.pltCoords == "mlt":
+                estBndDF["selTime"] = selTime
+                estBndDF["MLT"] = estBndDF.apply( self.get_mlt, axis=1 )
+                xVecs, yVecs = mapHandle(estBndDF["MLT"].values*15., estBndDF["MLAT"], coords=self.pltCoords)
+            else:
+                xVecs, yVecs = mapHandle(estBndDF["MLON"].values, estBndDF["MLAT"], coords=self.pltCoords)
+            mapHandle.plot(xVecs, yVecs, color=linecolor,\
+                     linewidth=linewidth,linestyle=linestyle)
         else:
-            xVecs, yVecs = mapHandle(estBndDF["MLON"].values, estBndDF["MLAT"], coords=self.pltCoords)
-        mapHandle.plot(xVecs, yVecs, color=linecolor,\
-                 linewidth=linewidth,linestyle=linestyle)
+            pass
 
-
+        return
 
     def overlay_closest_sat_pass( self, selTime,  mapHandle, ax,\
                      rawSatDir, overlayElecFlux=True, hemisphere="north",\
