@@ -193,6 +193,8 @@ class PlotUtils(object):
         if overlayTime:
             for ss in satList:
                 uniqueTimeList = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["date"].unique()
+                if uniqueTimeList.size == 0:
+                    continue
                 timeDiff = ( uniqueTimeList.max() -\
                                  uniqueTimeList.min()\
                                   ).astype('timedelta64[m]')
