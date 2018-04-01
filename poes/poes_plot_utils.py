@@ -106,7 +106,7 @@ class PlotUtils(object):
                      overlayTime=True, inpCmap=ListedColormap(sns.color_palette("BuPu")),\
                      timeMarkerSize=2., zorder=5., alpha=0.6, vmin=0, vmax=5,\
                      timeZorder=7., timeFontSize=6., plotCBar=True, cbar_shrink=0.8,
-                     overlayTimeInterval=5,\
+                     overlayTimeInterval=5, timeTextColor="red",
                      autoScale=True, plotTitle=True,titleString=None ):
         # Given a timeRange and satellite list plot 
         # corresponding satellite passes
@@ -248,8 +248,8 @@ class PlotUtils(object):
                                  timePlotLatArr, coords=self.pltCoords)
                         ax.text(timeXVecs, timeYVecs, timeStr,\
                                 fontsize=timeFontSize,
-                                ha='left',va='center',color='grey',\
-                                 clip_on=True, zorder=timeZorder)
+                                ha='left',va='center',color=timeTextColor,\
+                                clip_on=True, zorder=timeZorder)
 
         # Title
         if plotTitle:
@@ -267,7 +267,7 @@ class PlotUtils(object):
                      overlayTime=True, inpCmap=ListedColormap(sns.color_palette("BuPu")),\
                      timeMarkerSize=2., zorder=5., alpha=0.6, vmin=0, vmax=5,\
                      timeZorder=7., timeFontSize=6., plotCBar=True, cbar_shrink=0.8,
-                     overlayTimeInterval=5,\
+                     overlayTimeInterval=5, timeTextColor="red",
                      autoScale=True, plotTitle=True,titleString=None ):
         # Given a timeRange and satellite list plot 
         # corresponding satellite passes
@@ -379,7 +379,7 @@ class PlotUtils(object):
                                  timePlotLatArr, coords=self.pltCoords)
                         ax.text(timeXVecs, timeYVecs, timeStr,\
                                 fontsize=timeFontSize,
-                                ha='left',va='center',color='grey',\
+                                ha='left',va='center',color=timeTextColor,\
                                  clip_on=True, zorder=timeZorder)
 
         # Title
