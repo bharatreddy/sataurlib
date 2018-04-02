@@ -112,6 +112,7 @@ class PlotUtils(object):
         # corresponding satellite passes
         # If overlayElecFlux is true! Electron flux is overlayed
         # else proton flux is overlayed!
+
         fileList = []
         fileCnt = 0
         for root, dirs, files in os.walk(rawSatDir):
@@ -193,6 +194,7 @@ class PlotUtils(object):
         if overlayTime:
             for ss in satList:
                 uniqueTimeList = poesRawPlotDF[ poesRawPlotDF["sat"] == ss[1:] ]["date"].unique()
+
                 if uniqueTimeList.size == 0:
                     continue
                 timeDiff = ( uniqueTimeList.max() -\
@@ -236,8 +238,10 @@ class PlotUtils(object):
                         (x,y) = self.pol2cart( poesLats, poesLons )
                         fXIn = interp1d(satTSArr, x)
                         fYIn = interp1d(satTSArr, y)
-                        if allDayTSList[dd].size <= 2:
-                            continue
+
+                        #if allDayTSList[dd].size <= 2:
+                        #    continue
+
                         xArr = fXIn(allDayTSList[dd])
                         yArr = fYIn(allDayTSList[dd])
                         (timePlotLatArr, timePlotLonArr) = self.cart2pol( xArr, yArr )
