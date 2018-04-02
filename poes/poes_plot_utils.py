@@ -242,8 +242,11 @@ class PlotUtils(object):
                         #if allDayTSList[dd].size <= 2:
                         #    continue
 
-                        xArr = fXIn(allDayTSList[dd])
-                        yArr = fYIn(allDayTSList[dd])
+                        try:
+                            xArr = fXIn(allDayTSList[dd])
+                            yArr = fYIn(allDayTSList[dd])
+                        except ValueError:
+                            continue
                         (timePlotLatArr, timePlotLonArr) = self.cart2pol( xArr, yArr )
                         xTVecs, yTVecs = mapHandle(timePlotLonArr,\
                                          timePlotLatArr, coords=self.pltCoords)
