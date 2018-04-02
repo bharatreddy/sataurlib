@@ -49,7 +49,7 @@ class PlotUtils(object):
     def overlay_equ_bnd( self, selTime, mapHandle, ax,\
                      rawSatDir=None, inpFileName=None, overlayElecFlux=True,\
                       plotTitle=False,titleString=None,\
-                      linestyle="--", linewidth=2, linecolor='k' ):
+                      linestyle="--", linewidth=2, linecolor='k', line_zorder=7):
         # Given a time overlay the estimated equatorward auroral oval
         # boundary on a map. Currently only the northern hemisphere and 
         # the electron precipitation boundary is supported.
@@ -94,7 +94,7 @@ class PlotUtils(object):
             else:
                 xVecs, yVecs = mapHandle(estBndDF["MLON"].values, estBndDF["MLAT"], coords=self.pltCoords)
             mapHandle.plot(xVecs, yVecs, color=linecolor,\
-                     linewidth=linewidth,linestyle=linestyle)
+                     linewidth=linewidth,linestyle=linestyle, zorder=line_zorder)
         else:
             pass
 
