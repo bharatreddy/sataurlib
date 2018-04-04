@@ -215,10 +215,11 @@ class UtilsSsusi(object):
         return (x, y)
         
     def overlay_sat_data(self, filteredDict, mapHandle, ax,\
-                        satList=["F18", "F17", "F16"], plotType='d135',\
-                        overlayTime=True, overlayTimeInterval=5, timeLinestyle=':',\
-                        timeColor="black", timeFontSize=8., zorder=5., timeZorder=7.,\
-                         plotCBar=True, autoScale=True, vmin=0., vmax=1000.,\
+                         satList=["F18", "F17", "F16"], plotType='d135',\
+                         overlayTime=True, overlayTimeInterval=5, timeLinestyle=':',\
+                         timeColor="black", timeFontSize=8., zorder=5., timeZorder=7.,\
+                         plotCBar=True, cbar_shrink=0.8, autoScale=True,
+                         vmin=0., vmax=1000.,\
                          plotTitle=True, titleString=None, inpTime=None,alpha=0.5,\
                          markSatName=True, coords="mag", ssusiCmap="Greens"):
         """
@@ -385,7 +386,7 @@ class UtilsSsusi(object):
                                  timeColor, zorder=timeZorder, linestyle=timeLinestyle)
             # plot colorbar
             if plotCBar:
-                cbar = plt.colorbar(ssusiPlot, orientation='vertical')
+                cbar = plt.colorbar(ssusiPlot, orientation='vertical', shrink=cbar_shrink)
                 cbar.set_label('Rayleighs', size=14)
             # Title
             if plotTitle:
