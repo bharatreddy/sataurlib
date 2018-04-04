@@ -12,7 +12,7 @@ class ProcessData(object):
     A class to Download SSUSI data
     given a date and datatype!
     """
-    def __init__(self, inpDirs, outDir, inpDate):
+    def __init__(self, inpDirs, outDir, inpDate, dataType="sdr"):
         """
         Given a list of dirs (SSUSI has multiple files per date
         for the same satellite). Read all files from it.
@@ -22,7 +22,8 @@ class ProcessData(object):
         for currDir in inpDirs:
             for root, dirs, files in os.walk(currDir):
                 for fNum, fName in enumerate(files):
-                    self.fileList.append( root + fName )
+                    if dataType.upper() in fName:
+                        self.fileList.append( root + fName )
         self.outDir = outDir
         self.inpDate = inpDate
 
