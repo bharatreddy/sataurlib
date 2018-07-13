@@ -261,10 +261,10 @@ class PlotUtils(object):
         # Title
         if plotTitle:
             if titleString is not None:
-                plt.title(titleString)
+                ax.set_title(titleString)
             else:
                 inpTimeStr = selTime.strftime("%Y-%m-%d  %H:%M") +" UT" 
-                plt.title( inpTimeStr )
+                ax.set_title( inpTimeStr )
         
 
 
@@ -392,11 +392,11 @@ class PlotUtils(object):
         # Title
         if plotTitle:
             if titleString is not None:
-                plt.title(titleString)
+                ax.set_title(titleString)
             else:
                 inpTimeStr = timeRange[0].strftime("%Y-%m-%d  %H:%M") +" -- " +\
                                 timeRange[1].strftime("%Y-%m-%d  %H:%M")
-                plt.title( inpTimeStr )
+                ax.set_title( inpTimeStr )
 
 
     def read_poes_data(self, fileList):
