@@ -185,7 +185,10 @@ class PlotUtils(object):
                             vmin=vmin, vmax=vmax, ax=ax, alpha=alpha, cmap=inpCmap)
         # plot colorbar
         if plotCBar:
-            cbar = plt.colorbar(poesPlot, orientation='vertical', shrink=cbar_shrink, cax=cax)
+            if cax is None:
+                cbar = plt.colorbar(poesPlot, orientation='vertical', shrink=cbar_shrink)
+            else:
+                cbar = plt.colorbar(poesPlot, orientation='vertical', cax=cax)
             if overlayElecFlux:
                 cbar.set_label(r"Log electron Flux $ [ergs\ cm^{-2}\ s^{-2}]$", size=10)
             else:
@@ -329,7 +332,10 @@ class PlotUtils(object):
                             vmin=vmin, vmax=vmax, ax=ax, alpha=alpha, cmap=inpCmap)
         # plot colorbar
         if plotCBar:
-            cbar = plt.colorbar(poesPlot, orientation='vertical', shrink=cbar_shrink, cax=cax)
+            if cax is None:
+                cbar = plt.colorbar(poesPlot, orientation='vertical', shrink=cbar_shrink)
+            else:
+                cbar = plt.colorbar(poesPlot, orientation='vertical', cax=cax)
             cbar.set_label(r"Log Elec. Flux $ [ergs\ cm^{-2}\ s^{-2}]$", size=10)
         # overlay time
         if overlayTime:
