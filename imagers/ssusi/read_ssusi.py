@@ -47,6 +47,8 @@ class ProcessData(object):
                 satName = "F17"
             if "F16" in currFile:
                 satName = "F16"
+	    if "F19" in currFile:
+		satName = "F19"
             if ( (".nc" not in currFile) & (".NC" not in currFile) ):
                 print "Not a valid netcdf file!!"
                 continue
@@ -119,7 +121,8 @@ class ProcessData(object):
             # if the file for the date exists append data
             # else create the file and write data!!!
             outFileName = self.outDir + "/" + satName + "/" + currDate + ".txt"
-            if not os.path.exists( outFileName ):
+            print "outFileName--->", outFileName
+	    if not os.path.exists( outFileName ):
                 # NOTE we only need header when writing data for the first time!
                 with open(outFileName, 'w') as ftB:
                     ssusiDF.to_csv(ftB, header=True,\
