@@ -331,6 +331,10 @@ class PoesAur(object):
                              (currPOESDF["date"] >= currPOESDF["start_time_nth"]) &\
                              (currPOESDF["date"] <= currPOESDF["end_time_nth"])\
                              ].reset_index(drop=True)
+                # NOTE we are only calculating values for northern hemi
+                # This will have a lot of impact on future calcs
+                currPOESDF = currPOESDF[ currPOESDF["aacgm_lat_foot"] > 0. ]\
+                                            .reset_index(drop=True)
                 # Divide satellite data to two passes
                 # we'll get boundary data from each pass
                 # In the first pass, sat is moving from 
@@ -350,115 +354,97 @@ class PoesAur(object):
                 currPOESDFEquatorwards = currPOESDF[\
                                         currPOESDF["latRowDiffs"] < 0.\
                                         ].reset_index(drop=True)
+                # Apply Gaussian filter to smooth the data
                 currPOESDFPolewards["filtEleFluxPoleArr"] = ndimage.filters.gaussian_filter1d(\
                                         currPOESDFPolewards["log_ele_flux"],self.gauss_smooth_sigma) 
-                currPOESDFPolewards["diffEleFluxPoleArr"] = numpy.gradient(\
-                                        numpy.gradient(currPOESDFPolewards["filtEleFluxPoleArr"]))
-                # Get laplacian of gaussian for Equatorward pass
                 currPOESDFEquatorwards["filtEleFluxEquatorArr"] = \
                                     ndimage.filters.gaussian_filter1d(\
                                     currPOESDFEquatorwards["log_ele_flux"],self.gauss_smooth_sigma) #
-                currPOESDFEquatorwards["diffEleFluxEquatorArr"] = \
-                                    numpy.gradient(numpy.gradient(\
-                                        currPOESDFEquatorwards["filtEleFluxEquatorArr"]))
+                # Now we'll use simple method to calculate the boudaries
+                # We'll calculate the max, min and std values of electron 
+                # flux and estimate the cutoff as the closest (in time) point
+                # where e flux is with in (min value + 1 std. dev) to the max value.
+                # There are 5 sats we'll use groupby
+                polePassMinFlux = currPOESDFPolewards[["filtEleFluxPoleArr",\
+                                     "sat"]].groupby("sat").min().reset_index()
+                polePassMinFlux.columns = [ "sat", "min_flux" ]
+                polePassMaxFlux = currPOESDFPolewards[["filtEleFluxPoleArr",\
+                                     "sat"]].groupby("sat").max().reset_index()
+                polePassMaxFlux.columns = [ "sat", "max_flux" ]
+                polePassStdFlux = currPOESDFPolewards[["filtEleFluxPoleArr",\
+                                     "sat"]].groupby("sat").std().reset_index()
+                polePassStdFlux.columns = [ "sat", "std_flux" ]
+                # equ
+                equPassMinFlux = currPOESDFEquatorwards[["filtEleFluxEquatorArr",\
+                                     "sat"]].groupby("sat").min().reset_index()
+                equPassMinFlux.columns = [ "sat", "min_flux" ]
+                equPassMaxFlux = currPOESDFEquatorwards[["filtEleFluxEquatorArr",\
+                                         "sat"]].groupby("sat").max().reset_index()
+                equPassMaxFlux.columns = [ "sat", "max_flux" ]
+                equPassStdFlux = currPOESDFEquatorwards[["filtEleFluxEquatorArr",\
+                                         "sat"]].groupby("sat").std().reset_index()
+                equPassStdFlux.columns = [ "sat", "std_flux" ]
+                polePassStatSummDF = pandas.merge( polePassMinFlux,\
+                                                     polePassMaxFlux, on="sat" )
+                polePassStatSummDF = pandas.merge( polePassStatSummDF,\
+                                                     polePassStdFlux, on="sat" )
+                equPassStatSummDF = pandas.merge( equPassMinFlux,\
+                                                     equPassMaxFlux, on="sat" )
+                equPassStatSummDF = pandas.merge( equPassStatSummDF,\
+                                                     equPassStdFlux, on="sat" )
+                # get the time instance where the flux is max
+                # for each satellite
+                maxDTPolInds = currPOESDFPolewards.groupby(['sat'])\
+                                    ['filtEleFluxPoleArr'].transform(max) ==\
+                                     currPOESDFPolewards['filtEleFluxPoleArr']
+                maxDTPolDF = currPOESDFPolewards[ maxDTPolInds ][["date", "sat"]]
+                maxDTPolDF.columns = [ "max_date", "sat" ]
+                # equatorward pass
+                maxDTEquInds = currPOESDFEquatorwards.groupby(['sat'])\
+                                    ['filtEleFluxEquatorArr'].transform(max) ==\
+                                     currPOESDFEquatorwards['filtEleFluxEquatorArr']
+                maxDTEquDF = currPOESDFEquatorwards[ maxDTEquInds ][["date", "sat"]]
+                maxDTEquDF.columns = [ "max_date", "sat" ]
+                polePassStatSummDF["cut_off"] = polePassStatSummDF["min_flux"] +\
+                                                polePassStatSummDF["std_flux"]
+                equPassStatSummDF["cut_off"] = equPassStatSummDF["min_flux"] +\
+                                                equPassStatSummDF["std_flux"]
+                # Now get the time instances of boundary
+                cutOffPoleDF = pandas.merge( currPOESDFPolewards,\
+                                                 maxDTPolDF, on="sat" )
+                cutOffPoleDF = pandas.merge( cutOffPoleDF,\
+                                         polePassStatSummDF, on="sat" )
+                cutOffPoleDF = cutOffPoleDF[ ( cutOffPoleDF["date"] <=\
+                                     cutOffPoleDF["max_date"] ) &\
+                                   ( cutOffPoleDF["filtEleFluxPoleArr"] <=\
+                                         cutOffPoleDF["cut_off"] )
+                                   ]
+                cutOffPoleDF = cutOffPoleDF[["sat", "date"]].groupby(\
+                                "sat").max().reset_index()
+                # equatorward pass
+                cutOffEquDF = pandas.merge( currPOESDFEquatorwards,\
+                                                 maxDTEquDF, on="sat" )
+                cutOffEquDF = pandas.merge( cutOffEquDF,\
+                                         equPassStatSummDF, on="sat" )
 
-                # get indices of min location Poleward pass
-                minLocs = currPOESDFPolewards.groupby(['sat'])\
-                                    ['diffEleFluxPoleArr'].transform(min) ==\
-                                     currPOESDFPolewards['diffEleFluxPoleArr']
-                minPolePassLoc = currPOESDFPolewards[ minLocs ]
-                minPolePassLoc = minPolePassLoc[ ["sat"] ]
-                minPolePassLoc = minPolePassLoc.reset_index()
-                minPolePassLoc.columns = [ "min_loc_index", "sat" ]
-                # get indices of max location Poleward pass
-                maxLocs = currPOESDFPolewards.groupby(['sat'])\
-                                    ['diffEleFluxPoleArr'].transform(max) ==\
-                                     currPOESDFPolewards['diffEleFluxPoleArr']
-                maxPolePassLoc = currPOESDFPolewards[ maxLocs ]
-                maxPolePassLoc = maxPolePassLoc[ ["sat"] ]
-                maxPolePassLoc = maxPolePassLoc.reset_index()
-                maxPolePassLoc.columns = [ "max_loc_index", "sat" ]
-                selLocPolePass = pandas.merge( minPolePassLoc, maxPolePassLoc, on="sat" )
-                selLocPolePass["nrstInd"] = selLocPolePass[ \
-                                ["min_loc_index", "max_loc_index"] ].min(axis=1)
-                # get indices of min location Equatorward pass
-                minLocs = currPOESDFEquatorwards.groupby(['sat'])\
-                                    ['diffEleFluxEquatorArr'].transform(min) ==\
-                                     currPOESDFEquatorwards['diffEleFluxEquatorArr']
-                minEquatorPassLoc = currPOESDFEquatorwards[ minLocs ]
-                minEquatorPassLoc = minEquatorPassLoc[ ["sat"] ]
-                minEquatorPassLoc = minEquatorPassLoc.reset_index()
-                minEquatorPassLoc.columns = [ "min_loc_index", "sat" ]
-                # get indices of max location Equatorward pass
-                maxLocs = currPOESDFEquatorwards.groupby(['sat'])\
-                                    ['diffEleFluxEquatorArr'].transform(max) ==\
-                                     currPOESDFEquatorwards['diffEleFluxEquatorArr']
-                maxEquatorPassLoc = currPOESDFEquatorwards[ maxLocs ]
-                maxEquatorPassLoc = maxEquatorPassLoc[ ["sat"] ]
-                maxEquatorPassLoc = maxEquatorPassLoc.reset_index()
-                maxEquatorPassLoc.columns = [ "max_loc_index", "sat" ]
-                selLocEquatorPass = pandas.merge( minEquatorPassLoc, maxEquatorPassLoc, on="sat" )
-                selLocEquatorPass["nrstInd"] = selLocEquatorPass[ \
-                                ["min_loc_index", "max_loc_index"] ].max(axis=1)
-                # Now get the actual locations
-                polePassEqBndDF = currPOESDFPolewards.ix[selLocPolePass["nrstInd"]]\
-                                        [ ["diffEleFluxPoleArr", "aacgm_lat_foot", "sat"] ].reset_index()
-                equatorPassEqBndDF = currPOESDFEquatorwards.ix[selLocEquatorPass["nrstInd"]]\
-                                        [ ["diffEleFluxEquatorArr", "aacgm_lat_foot", "sat"] ].reset_index()
-                polePassEqBndDF.columns = [ "ind_sel", "diffEleFlux_chosen", "lat_chosen", "sat" ]
-                equatorPassEqBndDF.columns = [ "ind_sel", "diffEleFlux_chosen", "lat_chosen", "sat" ]
-                # Poleward
+                cutOffEquDF = cutOffEquDF[ ( cutOffEquDF["date"] >=\
+                                     cutOffEquDF["max_date"] ) &\
+                                   ( cutOffEquDF["filtEleFluxEquatorArr"] <=\
+                                         cutOffEquDF["cut_off"] )
+                                   ]
+                cutOffEquDF = cutOffEquDF[["sat", "date"]].groupby(\
+                                "sat").min().reset_index()
+                # Now get sat, lat, mlon, mlt of the bounadry
                 polePassEqBndDF = pandas.merge( currPOESDFPolewards,\
-                                     polePassEqBndDF, on="sat" )
-                equatorPassEqBndDF = pandas.merge( currPOESDFEquatorwards,\
-                                     equatorPassEqBndDF, on="sat" )
-                # get max ele flux values
-                maxFiltEleFluxPole = polePassEqBndDF.groupby("sat")["filtEleFluxPoleArr"].max().reset_index()
-                maxFiltEleFluxPole.columns = [ "sat", "filtEleFluxPoleArr_max" ]
-                maxFiltEleFluxEquator = equatorPassEqBndDF.groupby("sat")["filtEleFluxEquatorArr"].max().reset_index()
-                maxFiltEleFluxEquator.columns = [ "sat", "filtEleFluxEquatorArr_max" ]
-
-                # Setup filters to identify boundaries
-                polePassEqBndDF = pandas.merge( polePassEqBndDF,\
-                                         maxFiltEleFluxPole, on="sat" )
-                equatorPassEqBndDF = pandas.merge( equatorPassEqBndDF,\
-                                         maxFiltEleFluxEquator, on="sat" )
-
-                polePassEqBndDF = polePassEqBndDF[  \
-                            abs( polePassEqBndDF["diffEleFluxPoleArr"] ) <= \
-                            abs(polePassEqBndDF["diffEleFlux_chosen"]*self.diffElctrCutoffBnd) ]
-
-                polePassEqBndDF = polePassEqBndDF[ \
-                                    ( abs(polePassEqBndDF["aacgm_lat_foot"]) < \
-                                    abs(polePassEqBndDF["lat_chosen"]) ) &\
-                                     (polePassEqBndDF["filtEleFluxPoleArr_max"] -\
-                                     polePassEqBndDF["filtEleFluxPoleArr"] > self.filtEleFluxCutoffMagn) ]
-                maxFiltLatPole = polePassEqBndDF.groupby("sat")["aacgm_lat_foot"].max().reset_index()
-                maxFiltLatPole.columns = [ "sat", "max_lat" ]
-                polePassEqBndDF = pandas.merge( polePassEqBndDF, maxFiltLatPole, on="sat" )
-                polePassEqBndDF = polePassEqBndDF[ polePassEqBndDF["aacgm_lat_foot"] ==\
-                                                  polePassEqBndDF["max_lat"] ]
-                # Equatorward
-                equatorPassEqBndDF = equatorPassEqBndDF[  \
-                            abs( equatorPassEqBndDF["diffEleFluxEquatorArr"] ) <= \
-                            abs(equatorPassEqBndDF["diffEleFlux_chosen"]*self.diffElctrCutoffBnd) ]
-                equatorPassEqBndDF = equatorPassEqBndDF[ \
-                                    ( abs(equatorPassEqBndDF["aacgm_lat_foot"]) < \
-                                    abs(equatorPassEqBndDF["lat_chosen"]) ) &\
-                                     (equatorPassEqBndDF["filtEleFluxEquatorArr_max"] -\
-                                     equatorPassEqBndDF["filtEleFluxEquatorArr"] > self.filtEleFluxCutoffMagn) ]
-                maxLatEquator = equatorPassEqBndDF.groupby("sat")["aacgm_lat_foot"].max().reset_index()
-                maxLatEquator.columns = [ "sat", "max_lat" ]
-                equatorPassEqBndDF = pandas.merge( equatorPassEqBndDF, maxLatEquator, on="sat" )
-                equatorPassEqBndDF = equatorPassEqBndDF[ equatorPassEqBndDF["aacgm_lat_foot"] ==\
-                                                  equatorPassEqBndDF["max_lat"] ]
-                # We only need a few columns
+                             cutOffPoleDF, on=["sat", "date"] )
                 polePassEqBndDF = polePassEqBndDF[ ["sat", "aacgm_lat_foot",\
-                                     "aacgm_lon_foot", "MLT"] ]
+                                    "aacgm_lon_foot", "MLT"] ]
                 polePassEqBndDF.columns = [ "sat", "pole_mlat",\
                                              "pole_mlon", "pole_mlt"  ]
+                equatorPassEqBndDF = pandas.merge( currPOESDFEquatorwards,\
+                             cutOffEquDF, on=["sat", "date"] )
                 equatorPassEqBndDF = equatorPassEqBndDF[ ["sat", "aacgm_lat_foot",\
-                                     "aacgm_lon_foot", "MLT"] ]
+                                    "aacgm_lon_foot", "MLT"] ]
                 equatorPassEqBndDF.columns = [ "sat", "equator_mlat",\
                                             "equator_mlon", "equator_mlt"  ]
                 currAurEqBndDF = pandas.merge( polePassEqBndDF, equatorPassEqBndDF,\
@@ -486,72 +472,72 @@ class PoesAur(object):
                          formats allowed, TRY AGAIN!"
                 return None
         for currTime in bndLocDF["time"].unique():
-            try:
-                currBndDF = bndLocDF[ bndLocDF["time"] == currTime ]
-                if currBndDF.shape[0] <= 3:
-                    continue
-                # Convert to numpy arrays 
-                poleMlatArr = currBndDF["pole_mlat"].values
-                poleMlonArr = currBndDF["pole_mlon"].values
-                poleMltArr = currBndDF["pole_mlt"].values
-                equMlatArr = currBndDF["equator_mlat"].values
-                equMlonArr = currBndDF["equator_mlon"].values
-                equMltArr = currBndDF["equator_mlt"].values
-                # discard nan values
-                poleMlatArr = poleMlatArr[~numpy.isnan(poleMlatArr)]
-                poleMlonArr = poleMlonArr[~numpy.isnan(poleMlonArr)]
-                poleMltArr = poleMltArr[~numpy.isnan(poleMltArr)]
-                equMlatArr = equMlatArr[~numpy.isnan(equMlatArr)]
-                equMlonArr = equMlonArr[~numpy.isnan(equMlonArr)]
-                equMltArr = equMltArr[~numpy.isnan(equMltArr)]
-                # Concat the arrays together
-                latPoesAll = numpy.append( poleMlatArr, equMlatArr )
-                lonPoesAll = numpy.append( poleMlonArr, equMlonArr )
-                # Drop na's again
-                lonPoesAll = lonPoesAll[~numpy.isnan(lonPoesAll)]
-                latPoesAll = latPoesAll[~numpy.isnan(lonPoesAll)]
-                # Now we do the fitting part...
-                # Target function
-                fitfunc = lambda p, x: p[0] + \
-                            p[1]*numpy.cos(\
-                            2*math.pi*(x/360.)+p[2]) 
-                # Distance to the target function
-                errfunc = lambda p, x,\
-                             y: fitfunc(p, x) - y 
-                # get the fitting results
-                # Initial guess
-                p0Equ = [ 1., 1., 1.]
-                p1Equ, successEqu = optimize.leastsq(errfunc,\
-                             p0Equ[:], args=(lonPoesAll, latPoesAll))
-                eqPlotLons = numpy.linspace(0., 360., 25.)
-                eqPlotLons[-1] = 0.
-                eqBndLocs = []
-                for xx in eqPlotLons :
-                    currLatEst = p1Equ[0] +\
-                            p1Equ[1]*numpy.cos(2*math.pi*(xx/360.)+p1Equ[2] )
-                    eqBndLocs.append( ( round(currLatEst,1), xx ) )
-                # Convert to DF
-                aurFitDF = pandas.DataFrame( eqBndLocs, \
-                            columns=["MLAT", "MLON"] )
-                cnvrtTime = pandas.to_datetime(str(currTime)) 
-                aurFitDF["date"] = cnvrtTime.strftime( "%Y%m%d" )
-                aurFitDF["time"] = cnvrtTime.strftime( "%H%M" )
-                if save_to_file:
-                    outFitResFil = outDir + "poes-fit-" +\
-                            cnvrtTime.strftime( "%Y%m%d" ) + "." + fileFormat
-                    if firstWrite:
-                        with open(outFitResFil, 'w') as fra:
-                            aurFitDF.to_csv(fra, header=True,\
-                                              index=False, sep=' ' )
-                            print "saving to file--->", outFitResFil
-                        firstWrite = False
-                    else:
-                        with open(outFitResFil, 'a') as fra:
-                            aurFitDF.to_csv(fra, header=False,\
-                                              index=False, sep=' ' )                
-                    fitDFList.append( aurFitDF )
-            except:
-                print "couldnt get a fit! skipping!"
+            # try:
+            currBndDF = bndLocDF[ bndLocDF["time"] == currTime ]
+            if currBndDF.shape[0] <= 3:
                 continue
+            # Convert to numpy arrays 
+            poleMlatArr = currBndDF["pole_mlat"].values
+            poleMlonArr = currBndDF["pole_mlon"].values
+            poleMltArr = currBndDF["pole_mlt"].values
+            equMlatArr = currBndDF["equator_mlat"].values
+            equMlonArr = currBndDF["equator_mlon"].values
+            equMltArr = currBndDF["equator_mlt"].values
+            # discard nan values
+            poleMlatArr = poleMlatArr[~numpy.isnan(poleMlatArr)]
+            poleMlonArr = poleMlonArr[~numpy.isnan(poleMlonArr)]
+            poleMltArr = poleMltArr[~numpy.isnan(poleMltArr)]
+            equMlatArr = equMlatArr[~numpy.isnan(equMlatArr)]
+            equMlonArr = equMlonArr[~numpy.isnan(equMlonArr)]
+            equMltArr = equMltArr[~numpy.isnan(equMltArr)]
+            # Concat the arrays together
+            latPoesAll = numpy.append( poleMlatArr, equMlatArr )
+            lonPoesAll = numpy.append( poleMlonArr, equMlonArr )
+            # Drop na's again
+            lonPoesAll = lonPoesAll[~numpy.isnan(lonPoesAll)]
+            latPoesAll = latPoesAll[~numpy.isnan(lonPoesAll)]
+            # Now we do the fitting part...
+            # Target function
+            fitfunc = lambda p, x: p[0] + \
+                        p[1]*numpy.cos(\
+                        2*math.pi*(x/360.)+p[2]) 
+            # Distance to the target function
+            errfunc = lambda p, x,\
+                         y: fitfunc(p, x) - y 
+            # get the fitting results
+            # Initial guess
+            p0Equ = [ 1., 1., 1.]
+            p1Equ, successEqu = optimize.leastsq(errfunc,\
+                         p0Equ[:], args=(lonPoesAll, latPoesAll))
+            eqPlotLons = numpy.linspace(0., 360., 25.)
+            eqPlotLons[-1] = 0.
+            eqBndLocs = []
+            for xx in eqPlotLons :
+                currLatEst = p1Equ[0] +\
+                        p1Equ[1]*numpy.cos(2*math.pi*(xx/360.)+p1Equ[2] )
+                eqBndLocs.append( ( round(currLatEst,1), xx ) )
+            # Convert to DF
+            aurFitDF = pandas.DataFrame( eqBndLocs, \
+                        columns=["MLAT", "MLON"] )
+            cnvrtTime = pandas.to_datetime(str(currTime)) 
+            aurFitDF["date"] = cnvrtTime.strftime( "%Y%m%d" )
+            aurFitDF["time"] = cnvrtTime.strftime( "%H%M" )
+            if save_to_file:
+                outFitResFil = outDir + "poes-fit-" +\
+                        cnvrtTime.strftime( "%Y%m%d" ) + "." + fileFormat
+                if firstWrite:
+                    with open(outFitResFil, 'w') as fra:
+                        aurFitDF.to_csv(fra, header=True,\
+                                          index=False, sep=' ' )
+                        print "saving to file--->", outFitResFil
+                    firstWrite = False
+                else:
+                    with open(outFitResFil, 'a') as fra:
+                        aurFitDF.to_csv(fra, header=False,\
+                                          index=False, sep=' ' )                
+                fitDFList.append( aurFitDF )
+            # except:
+            #     print "couldnt get a fit! skipping!"
+            #     continue
         if len(fitDFList) > 0:
             return pandas.concat(fitDFList)
