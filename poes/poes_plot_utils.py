@@ -48,7 +48,7 @@ class PlotUtils(object):
 
     def overlay_equ_bnd( self, selTime, mapHandle, ax,\
                      rawSatDir=None, inpFileName=None, overlayElecFlux=True,\
-                      plotTitle=False,titleString=None,\
+                      plotTitle=False,titleString=None, remove_outliers=False, cutoff_iqr_prop=1.5,
                       linestyle="--", linewidth=2, linecolor='k', line_zorder=7):
         # Given a time overlay the estimated equatorward auroral oval
         # boundary on a map. Currently only the northern hemisphere and 
@@ -72,8 +72,9 @@ class PlotUtils(object):
                 # determine auroral boundaries from all the POES satellites
                 # at a given time. The procedure is described in the code! 
                 # go over it!!!
-                eqBndLocsDF = poesRdObj.get_nth_ele_eq_bnd_locs( aurPassDF,\
-                                                                poesAllEleDataDF )
+                eqBndLocsDF = poesRdObj.get_nth_ele_eq_bnd_locs( aurPassDF, poesAllEleDataDF,
+                                                                 remove_outliers=remove_outliers,
+                                                                 cutoff_iqr_prop=cutoff_iqr_prop)
                 estBndDF = poesRdObj.fit_circle_aurbnd(eqBndLocsDF, save_to_file=False)
         else:
             print "reading boundary data from-->", inpFileName
