@@ -314,7 +314,8 @@ class PoesAur(object):
             print "closest pass failed!!"
             return None
 
-    def get_nth_ele_eq_bnd_locs( self, poesDataDF, poesAllEleDataDF ):
+    def get_nth_ele_eq_bnd_locs( self, poesDataDF, poesAllEleDataDF,\
+             remove_outliers=False, cutoff_iqr_prop=1.5 ):
         # given a dataframe, loop through times and
         # get the locations of auroral boundaries
         # for each of the satellites.
@@ -354,12 +355,39 @@ class PoesAur(object):
                 currPOESDFEquatorwards = currPOESDF[\
                                         currPOESDF["latRowDiffs"] < 0.\
                                         ].reset_index(drop=True)
+                # Remove outliers if the option if chosen
+                # we'll use the box-plot technique here.
+                # Remove all those values which are more than
+                # certain proportion of inter quartile range 
+                # this proportion is set by "cutoff_iqr_prop"
+                if remove_outliers:
+                    # poleward pass
+                    poleDFDesc = currPOESDFPolewards["log_ele_flux"].describe()
+                    poleIQR = poleDFDesc["75%"] - poleDFDesc["25%"]
+                    minOutlierCutoffPolePass = poleDFDesc["25%"] - cutoff_iqr_prop*poleIQR
+                    maxOutlierCutoffPolePass = poleDFDesc["75%"] + cutoff_iqr_prop*poleIQR
+                    currPOESDFPolewards = currPOESDFPolewards[\
+                                 ( currPOESDFPolewards["log_ele_flux"] >=\
+                                  minOutlierCutoffPolePass ) &\
+                                   ( currPOESDFPolewards["log_ele_flux"] <=\
+                                    maxOutlierCutoffPolePass ) ]
+                    # equatorward pass
+                    equDFDesc = currPOESDFEquatorwards["log_ele_flux"].describe()
+                    equIQR = equDFDesc["75%"] - equDFDesc["25%"]
+                    minOutlierCutoffEquPass = equDFDesc["25%"] - cutoff_iqr_prop*equIQR
+                    maxOutlierCutoffEquPass = equDFDesc["75%"] + cutoff_iqr_prop*equIQR
+                    currPOESDFEquatorwards = currPOESDFEquatorwards[\
+                                ( currPOESDFEquatorwards["log_ele_flux"] >=\
+                                minOutlierCutoffEquPass ) &\
+                                ( currPOESDFEquatorwards["log_ele_flux"] <=\
+                                 maxOutlierCutoffEquPass ) ]
+
                 # Apply Gaussian filter to smooth the data
                 currPOESDFPolewards["filtEleFluxPoleArr"] = ndimage.filters.gaussian_filter1d(\
                                         currPOESDFPolewards["log_ele_flux"],self.gauss_smooth_sigma) 
                 currPOESDFEquatorwards["filtEleFluxEquatorArr"] = \
                                     ndimage.filters.gaussian_filter1d(\
-                                    currPOESDFEquatorwards["log_ele_flux"],self.gauss_smooth_sigma) #
+                                    currPOESDFEquatorwards["log_ele_flux"],self.gauss_smooth_sigma)
                 # Now we'll use simple method to calculate the boudaries
                 # We'll calculate the max, min and std values of electron 
                 # flux and estimate the cutoff as the closest (in time) point
