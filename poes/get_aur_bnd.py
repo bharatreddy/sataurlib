@@ -486,7 +486,7 @@ class PoesAur(object):
             return None
 
     def fit_circle_aurbnd( self, bndLocDF, save_to_file=True,\
-             fileFormat="txt",outDir="./" ):
+             fileFormat="txt",outDir="./", save_fit_coeff=False):
         # Given the boundary locations obtained
         # from different satellites, estimate the
         # auroral oval boundary by fitting a circle!
@@ -545,15 +545,18 @@ class PoesAur(object):
                         p1Equ[1]*numpy.cos(2*math.pi*(xx/360.)+p1Equ[2] )
                 eqBndLocs.append( ( round(currLatEst,1), xx ) )
             # Convert to DF
-            aurFitDF = pandas.DataFrame( eqBndLocs, \
-                        columns=["MLAT", "MLON"] )
+            if save_fit_coeff:
+                # Save the fitted coefficients of the Aur Bnd Shape
+                aurFitDF = pandas.DataFrame( [tuple(np.rount(p1Equ, 3))],
+                            columns=["p_0", "p_1", "p_2"] )
+                aurFitDF["sat"] = [currBndDF["sat"].values]
+            else:
+                # Save the fitted Aur Bnd points
+                aurFitDF = pandas.DataFrame( eqBndLocs, \
+                            columns=["MLAT", "MLON"] )
             cnvrtTime = pandas.to_datetime(str(currTime)) 
             aurFitDF["date"] = cnvrtTime.strftime( "%Y%m%d" )
             aurFitDF["time"] = cnvrtTime.strftime( "%H%M" )
-            aurFitDF["sat"] = currBndDF["sat"].values
-            aurFitDF["p_0"] = p1Equ[0]
-            aurFitDF["p_1"] = p1Equ[1]
-            aurFitDF["p_2"] = p1Equ[2]
             if save_to_file:
                 outFitResFil = outDir + "poes-fit-" +\
                         cnvrtTime.strftime( "%Y%m%d" ) + "." + fileFormat
