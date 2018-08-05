@@ -547,7 +547,7 @@ class PoesAur(object):
             # Convert to DF
             if save_fit_coeff:
                 # Save the fitted coefficients of the Aur Bnd Shape
-                aurFitDF = pandas.DataFrame( [tuple(np.rount(p1Equ, 3))],
+                aurFitDF = pandas.DataFrame( [tuple(numpy.round(p1Equ, 3))],
                             columns=["p_0", "p_1", "p_2"] )
                 aurFitDF["sat"] = [currBndDF["sat"].values]
             else:
