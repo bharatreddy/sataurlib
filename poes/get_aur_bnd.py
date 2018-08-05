@@ -550,6 +550,10 @@ class PoesAur(object):
             cnvrtTime = pandas.to_datetime(str(currTime)) 
             aurFitDF["date"] = cnvrtTime.strftime( "%Y%m%d" )
             aurFitDF["time"] = cnvrtTime.strftime( "%H%M" )
+            aurFitDF["sat"] = currBndDF["sat"].values
+            aurFitDF["p_0"] = p1Equ[0]
+            aurFitDF["p_1"] = p1Equ[1]
+            aurFitDF["p_2"] = p1Equ[2]
             if save_to_file:
                 outFitResFil = outDir + "poes-fit-" +\
                         cnvrtTime.strftime( "%Y%m%d" ) + "." + fileFormat
